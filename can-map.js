@@ -612,7 +612,7 @@ var Map = Construct.extend(
 
 		// ### each
 		// loops through all the key-value pairs on this map.
-		each: function () {
+		each: function (callback, context) {
             var keys = Map.keys(this);
             for(i =0, len = keys.length; i < len; i++) {
                 key = keys[i];

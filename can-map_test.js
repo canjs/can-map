@@ -1,6 +1,8 @@
 /* jshint asi:true*/
 var Map = require('can-map');
 var QUnit = require('steal-qunit');
+var ObserveInfo = require('can-observe-info');
+var Construct = require('can-construct');
 
 QUnit.module('can-map');
 
@@ -35,17 +37,17 @@ test("Nested Map", 5, function () {
 	ok(me.attr("name") instanceof Map);
 
 	me.bind("change", function (ev, attr, how, val, old) {
-		equal(attr, "name.first", "correct change name")
-		equal(how, "set")
-		equal(val, "Brian", "correct")
-		equal(old, "Justin", "correct")
-	})
+		equal(attr, "name.first", "correct change name");
+		equal(how, "set");
+		equal(val, "Brian", "correct");
+		equal(old, "Justin", "correct");
+	});
 
 	me.attr("name.first", "Brian");
 
-	me.unbind("change")
+	me.unbind("change");
 
-})
+});
 
 test("remove attr", function () {
 	var state = new Map({
@@ -121,16 +123,6 @@ test("cyclical objects (#521)", function () {
 
 })
 
-test('Getting attribute that is a can.compute should return the compute and not the value of the compute (#530)', function () {
-	var compute = can.compute('before');
-	var map = new Map({
-		time: compute
-	});
-
-	equal(map.time, compute, 'dot notation call of time is compute');
-	equal(map.attr('time'), compute, '.attr() call of time is compute');
-})
-
 test('_cid add to original object', function () {
 	var map = new Map(),
 		obj = {
@@ -139,29 +131,15 @@ test('_cid add to original object', function () {
 
 	map.attr('myObj', obj);
 	ok(!obj._cid, '_cid not added to original object');
-})
-
-test("can.each used with maps", function () {
-	can.each(new Map({
-		foo: "bar"
-	}), function (val, attr) {
-
-		if (attr === "foo") {
-			equal(val, "bar")
-		} else {
-			ok(false, "no properties other should be called " + attr)
-		}
-
-	})
-})
+});
 
 test("Map serialize triggers reading (#626)", function () {
-	var old = can.__observe;
+	var old = ObserveInfo.observe;
 
 	var attributesRead = [];
 	var readingTriggeredForKeys = false;
 
-	can.__observe = function (object, attribute) {
+	ObserveInfo.observe = function (object, attribute) {
 		if (attribute === "__keys") {
 			readingTriggeredForKeys = true;
 		} else {
@@ -178,10 +156,10 @@ test("Map serialize triggers reading (#626)", function () {
 
 
 
-	ok(can.inArray("cats", attributesRead ) !== -1 && can.inArray( "dogs", attributesRead ) !== -1, "map serialization triggered __reading on all attributes");
+	ok(attributesRead.indexOf("cats") !== -1 && attributesRead.indexOf("dogs") !== -1, "map serialization triggered __reading on all attributes");
 	ok(readingTriggeredForKeys, "map serialization triggered __reading for __keys");
 
-	can.__observe = old;
+	ObserveInfo.observe = old;
 })
 
 test("Test top level attributes", 7, function () {
@@ -208,25 +186,6 @@ test("Test top level attributes", 7, function () {
 	equal(test.attr('my.newCount'), 1, 'falsey (1) value accessed correctly');
 });
 
-test("computed properties don't cause memory leaks", function () {
-	var computeMap = Map.extend({
-		'name': can.compute(function(){
-			return this.attr('first') + this.attr('last')
-		})
-	}),
-		handler = function(){},
-		map = new computeMap({
-			first: 'Mickey',
-			last: 'Mouse'
-		});
-	map.bind('name', handler);
-	map.bind('name', handler);
-	equal(map._computedAttrs.name.count, 2, '2 handlers listening to computed property');
-	map.unbind('name', handler);
-	map.unbind('name', handler);
-	equal(map._computedAttrs.name.count, 0, '0 handlers listening to computed property');
-
-});
 
 test("serializing cycles", function(){
 	var map1 = new Map({name: "map1"});
@@ -279,13 +238,13 @@ test("map passed to Map constructor (#1166)", function(){
 });
 
 test("constructor passed to scope is threated as a property (#1261)", function(){
-	var Constructor = can.Construct.extend({});
+	var Constructor = Construct.extend({});
 
-	var Map = Map.extend({
+	var MyMap = Map.extend({
 	  Todo: Constructor
 	});
 
-	var m = new Map();
+	var m = new MyMap();
 
 	equal(m.attr("Todo"), Constructor);
 });
@@ -296,7 +255,7 @@ test('_bindings count maintained after calling .off() on undefined property (#14
 		test: 1
 	});
 
-	map.on('test', can.noop);
+	map.on('test', function(){});
 
 	equal(map._bindings, 1, 'The number of bindings is correct');
 
@@ -317,29 +276,6 @@ test("Should be able to get and set attribute named 'unwatch' on Map in Firefox"
 	ok(true, "can have attribute named 'unwatch' on a Map instance");
 });
 
-test('Creating map in compute dispatches all events properly', function() {
-	expect(2);
-
-	var source = can.compute(0);
-
-	var c = can.compute(function() {
-		var map = new Map();
-		source();
-		map.bind("foo", function(){
-			ok(true);
-		});
-		map.attr({foo: "bar"}); //DISPATCH
-
-		return map;
-	});
-
-	c.bind("change",function(){});
-
-	can.batch.start();
-	source(1);
-	can.batch.stop();
-});
-
 test('should get an empty string property value correctly', function() {
 	var map = new Map({
 		foo: 'foo',
@@ -347,21 +283,4 @@ test('should get an empty string property value correctly', function() {
 	});
 
 	equal(map.attr(''), 'empty string');
-});
-
-
-test("Map::attr setting is observable", function() {
-	expect(0);
-	var c = can.compute(function() {
-		return new Map();
-	});
-
-	c.bind('change', function() {
-		ok(false, "the compute should not be updated");
-	});
-
-	var map = c();
-
-	// recomputes c
-	map.attr('foo', 'bar');
 });
