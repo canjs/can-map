@@ -1,4 +1,5 @@
-/* jshint asi:true*/
+/* jshint asi:true */
+/*jshint -W079 */
 var Map = require('can-map');
 var QUnit = require('steal-qunit');
 var ObserveInfo = require('can-observe-info');
@@ -37,6 +38,7 @@ test("Nested Map", 5, function () {
 	ok(me.attr("name") instanceof Map);
 
 	me.bind("change", function (ev, attr, how, val, old) {
+		console.log(arguments);
 		equal(attr, "name.first", "correct change name");
 		equal(how, "set");
 		equal(val, "Brian", "correct");

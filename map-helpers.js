@@ -7,6 +7,23 @@ var isArray = require('can-util/js/is-array/is-array');
 var isPromise = require('can-util/js/is-promise/is-promise');
 var CID = require('can-util/js/cid/cid');
 var types = require('can-util/js/types/types');
+// ## POJOs to Map instance helpers
+
+// ### madeMap
+// A temporary map of Maps that have been made from plain JS objects.
+// `{POJO_CID: {obj: POJO, instance: MAP, added: Boolean}}`
+var madeMap = null;
+
+// ### teardownMap
+// Clears out map of converted objects and removes temporary `cids`.
+var teardownMap = function () {
+	for (var cid in madeMap) {
+		if (madeMap[cid].added) {
+			delete madeMap[cid].obj._cid;
+		}
+	}
+	madeMap = null;
+};
 
 var mapHelpers = {
 	// ### mapHelpers.attrParts
@@ -173,24 +190,6 @@ var mapHelpers = {
 	getMapFromObject: function (obj) {
 		return madeMap && madeMap[obj._cid] && madeMap[obj._cid].instance;
 	}
-};
-
-// ## POJOs to Map instance helpers
-
-// ### madeMap
-// A temporary map of Maps that have been made from plain JS objects.
-// `{POJO_CID: {obj: POJO, instance: MAP, added: Boolean}}`
-var madeMap = null;
-
-// ### teardownMap
-// Clears out map of converted objects and removes temporary `cids`.
-var teardownMap = function () {
-	for (var cid in madeMap) {
-		if (madeMap[cid].added) {
-			delete madeMap[cid].obj._cid;
-		}
-	}
-	madeMap = null;
 };
 
 module.exports = exports = mapHelpers;

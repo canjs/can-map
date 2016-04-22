@@ -28,16 +28,6 @@ var deepExtend = require("can-util/js/deep-extend/deep-extend");
 var assign = require("can-util/js/assign/assign");
 var types = require("can-util/js/types/types");
 var isArray = require("can-util/js/is-array/is-array");
-var makeArray = require("can-util/js/make-array/make-array");
-
-var oldIsMapLike = types.isMapLike;
-types.isMapLike = function(obj){
-    if(obj instanceof Map) {
-        return true;
-    } else {
-        return oldIsMapLike.call(this, obj);
-    }
-};
 
 // properties that can't be observed on ... no matter what
 var unobservable = {
@@ -613,15 +603,16 @@ var Map = Construct.extend(
 		// ### each
 		// loops through all the key-value pairs on this map.
 		each: function (callback, context) {
-            var keys = Map.keys(this);
-            for(i =0, len = keys.length; i < len; i++) {
-                key = keys[i];
-                item = this.attr(key);
-                if (callback.call(context || item, item, key, this) === false) {
-                    break;
-                }
+				var key, item;
+        var keys = Map.keys(this);
+        for(var i =0, len = keys.length; i < len; i++) {
+            key = keys[i];
+            item = this.attr(key);
+            if (callback.call(context || item, item, key, this) === false) {
+                break;
             }
-            return this;
+        }
+        return this;
 		},
 
 		// ### _each
@@ -644,5 +635,14 @@ Map.prototype.on = Map.prototype.bind = Map.prototype.addEventListener;
 Map.prototype.off = Map.prototype.unbind = Map.prototype.removeEventListener;
 Map.on = Map.bind = Map.addEventListener;
 Map.off = Map.unbind = Map.removeEventListener;
+
+var oldIsMapLike = types.isMapLike;
+types.isMapLike = function(obj){
+    if(obj instanceof Map) {
+        return true;
+    } else {
+        return oldIsMapLike.call(this, obj);
+    }
+};
 
 module.exports =  Map;
