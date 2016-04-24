@@ -289,8 +289,8 @@ test('should get an empty string property value correctly', function() {
 });
 
 
-test("can.Construct derived classes should be considered objects, not functions (#450)", function() {
-	var foostructor = can.Map({ text: "bar" }, {}),
+test("ObserveReader - can.Construct derived classes should be considered objects, not functions (#450)", function() {
+	var foostructor = Map.extend({ text: "bar" }, {}),
 		obj = {
 			next_level: {
 				thing: foostructor,

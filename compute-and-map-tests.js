@@ -1,6 +1,7 @@
 /*jshint -W079 */
 var Map = require('can-map');
 var canCompute = require('can-compute');
+var List = require('can-list');
 
 test('Getting attribute that is a canCompute should return the compute and not the value of the compute (#530)', function () {
 	var compute = canCompute('before');
