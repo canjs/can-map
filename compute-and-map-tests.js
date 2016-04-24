@@ -81,3 +81,20 @@ test("Map::attr setting is observable", function() {
 	// recomputes c
 	map.attr('foo', 'bar');
 });
+
+test('list sets up computed attributes (#790)', function() {
+	var L = List.extend({
+		i: can.compute(0),
+		a: 0
+	});
+
+	var l = new L([1]);
+	equal(l.attr('i'), 0);
+
+	var Map = can.Map.extend({
+		f: can.compute(0)
+	});
+
+	var m = new Map();
+	m.attr('f');
+});

@@ -3,6 +3,7 @@ var Map = require('can-map');
 var QUnit = require('steal-qunit');
 var ObserveInfo = require('can-observe-info');
 var Construct = require('can-construct');
+var observeReader = require('can-observe-info/reader/reader');
 
 QUnit.module('can-map');
 
@@ -283,4 +284,27 @@ test('should get an empty string property value correctly', function() {
 	});
 
 	equal(map.attr(''), 'empty string');
+});
+
+
+test("can.Construct derived classes should be considered objects, not functions (#450)", function() {
+	var foostructor = can.Map({ text: "bar" }, {}),
+		obj = {
+			next_level: {
+				thing: foostructor,
+				text: "In the inner context"
+			}
+		},
+		read;
+	foostructor.self = foostructor;
+
+	read = observeReader.read(obj, observeReader.reads("next_level.thing.self.text") );
+	equal(read.value, "bar", "static properties on a can.Construct-based function");
+
+	read = observeReader.read(obj, observeReader.reads("next_level.thing.self"), { isArgument: true });
+	ok(read.value === foostructor, "arguments shouldn't be executed");
+
+	foostructor.self = function() { return foostructor; };
+	read = observeReader.read(obj, observeReader.reads("next_level.thing.self.text"), { });
+	equal(read.value, "bar", "anonymous functions in the middle of a read should be executed if requested");
 });

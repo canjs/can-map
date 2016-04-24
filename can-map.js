@@ -21,6 +21,7 @@ var canBatch = require('can-event/batch/batch');
 var eventLifecycle = require('can-event/lifecycle/lifecycle');
 var Construct = require('can-construct');
 var ObserveInfo = require('can-observe-info');
+var observeReader = require('can-observe-info/reader/reader');
 
 var dev = require("can-util/js/dev/dev");
 var CID = require("can-util/js/cid/cid");
@@ -637,6 +638,9 @@ var Map = Construct.extend(
 
 		dispatch: canEvent.dispatch
 	});
+
+// makes it so things can read this.
+
 
 // ### etc
 // Setup on/off aliases
