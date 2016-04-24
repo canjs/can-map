@@ -1,5 +1,9 @@
-test('Getting attribute that is a can.compute should return the compute and not the value of the compute (#530)', function () {
-	var compute = can.compute('before');
+/*jshint -W079 */
+var Map = require('can-map');
+var canCompute = require('can-compute');
+
+test('Getting attribute that is a canCompute should return the compute and not the value of the compute (#530)', function () {
+	var compute = canCompute('before');
 	var map = new Map({
 		time: compute
 	});
@@ -14,18 +18,18 @@ test("can.each used with maps", function () {
 	}), function (val, attr) {
 
 		if (attr === "foo") {
-			equal(val, "bar")
+			equal(val, "bar");
 		} else {
-			ok(false, "no properties other should be called " + attr)
+			ok(false, "no properties other should be called " + attr);
 		}
 
-	})
+	});
 });
 
 test("computed properties don't cause memory leaks", function () {
 	var computeMap = Map.extend({
-		'name': can.compute(function(){
-			return this.attr('first') + this.attr('last')
+		'name': canCompute(function(){
+			return this.attr('first') + this.attr('last');
 		})
 	}),
 		handler = function(){},
@@ -46,9 +50,9 @@ test("computed properties don't cause memory leaks", function () {
 test('Creating map in compute dispatches all events properly', function() {
 	expect(2);
 
-	var source = can.compute(0);
+	var source = canCompute(0);
 
-	var c = can.compute(function() {
+	var c = canCompute(function() {
 		var map = new Map();
 		source();
 		map.bind("foo", function(){
@@ -68,7 +72,7 @@ test('Creating map in compute dispatches all events properly', function() {
 
 test("Map::attr setting is observable", function() {
 	expect(0);
-	var c = can.compute(function() {
+	var c = canCompute(function() {
 		return new Map();
 	});
 
