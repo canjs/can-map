@@ -648,4 +648,8 @@ types.isMapLike = function(obj){
     }
 };
 
+if(!types.DefaultMap) {
+	types.DefaultMap = Map;
+}
+
 module.exports =  Map;
