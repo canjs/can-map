@@ -22,6 +22,7 @@ var eventLifecycle = require('can-event/lifecycle/lifecycle');
 var Construct = require('can-construct');
 var ObserveInfo = require('can-observe-info');
 
+var namespace = require("can-util/namespace");
 var dev = require("can-util/js/dev/dev");
 var CID = require("can-util/js/cid/cid");
 var deepExtend = require("can-util/js/deep-extend/deep-extend");
@@ -652,4 +653,4 @@ if(!types.DefaultMap) {
 	types.DefaultMap = Map;
 }
 
-module.exports =  Map;
+module.exports = namespace.Map = Map;
