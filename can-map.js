@@ -25,7 +25,7 @@ var ObserveInfo = require('can-observe-info');
 var namespace = require("can-util/namespace");
 var dev = require("can-util/js/dev/dev");
 var CID = require("can-util/js/cid/cid");
-var deepExtend = require("can-util/js/deep-extend/deep-extend");
+var deepAssign = require("can-util/js/deep-assign/deep-assign");
 var assign = require("can-util/js/assign/assign");
 var types = require("can-util/js/types/types");
 var isArray = require("can-util/js/is-array/is-array");
@@ -163,7 +163,7 @@ var Map = Construct.extend(
 			var teardownMapping = obj && mapHelpers.addToMap(obj, this);
 
 			var defaultValues = this._setupDefaults(obj);
-			var data = assign(deepExtend(true, {}, defaultValues), obj);
+			var data = assign(deepAssign(true, {}, defaultValues), obj);
 
 			this.attr(data);
 
