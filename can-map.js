@@ -20,7 +20,7 @@ var canEvent = require('can-event');
 var canBatch = require('can-event/batch/batch');
 var eventLifecycle = require('can-event/lifecycle/lifecycle');
 var Construct = require('can-construct');
-var ObserveInfo = require('can-observe-info');
+var Observation = require('can-observation');
 
 var namespace = require("can-util/namespace");
 var dev = require("can-util/js/dev/dev");
@@ -132,7 +132,7 @@ var Map = Construct.extend(
 		// An observable way to get the keys from a map.
 		keys: function (map) {
 			var keys = [];
-			ObserveInfo.observe(map, '__keys');
+			Observation.add(map, '__keys');
 			for (var keyName in map._data) {
 				keys.push(keyName);
 			}
@@ -241,7 +241,7 @@ var Map = Construct.extend(
 				// somone wrote `new can.Map({"foo.bar": 1})`.
 				var value = this.___get(attr);
 				if (value !== undefined) {
-					ObserveInfo.observe(this, attr);
+					Observation.add(this, attr);
 					return value;
 				}
 
@@ -261,7 +261,7 @@ var Map = Construct.extend(
 		// property is being read.
 		__get: function(attr){
 			if(!unobservable[attr] && !this._computedAttrs[attr]) {
-				ObserveInfo.observe(this, attr);
+				Observation.add(this, attr);
 			}
 			return this.___get( attr );
 		},

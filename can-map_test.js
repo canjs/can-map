@@ -2,9 +2,9 @@
 /*jshint -W079 */
 var Map = require('can-map');
 var QUnit = require('steal-qunit');
-var ObserveInfo = require('can-observe-info');
+var Observation = require('can-observation');
 var Construct = require('can-construct');
-var observeReader = require('can-observe-info/reader/reader');
+var observeReader = require('can-observation/reader/reader');
 
 QUnit.module('can-map');
 
@@ -137,12 +137,12 @@ test('_cid add to original object', function () {
 });
 
 test("Map serialize triggers reading (#626)", function () {
-	var old = ObserveInfo.observe;
+	var old = Observation.add;
 
 	var attributesRead = [];
 	var readingTriggeredForKeys = false;
 
-	ObserveInfo.observe = function (object, attribute) {
+	Observation.add = function (object, attribute) {
 		if (attribute === "__keys") {
 			readingTriggeredForKeys = true;
 		} else {
@@ -162,7 +162,7 @@ test("Map serialize triggers reading (#626)", function () {
 	ok(attributesRead.indexOf("cats") !== -1 && attributesRead.indexOf("dogs") !== -1, "map serialization triggered __reading on all attributes");
 	ok(readingTriggeredForKeys, "map serialization triggered __reading for __keys");
 
-	ObserveInfo.observe = old;
+	Observation.add = old;
 })
 
 test("Test top level attributes", 7, function () {
