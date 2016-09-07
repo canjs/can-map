@@ -523,7 +523,7 @@ var Map = Construct.extend(
 		_triggerChange: function (attr, how, newVal, oldVal, batchNum) {
 
 			if(bubble.isBubbling(this, "change")) {
-				canBatch.trigger.call(this, {
+				canEvent.dispatch.call(this, {
 					type: "change",
 					target: this,
 					batchNum: batchNum
@@ -531,14 +531,14 @@ var Map = Construct.extend(
 
 			}
 
-			canBatch.trigger.call(this, {
+			canEvent.dispatch.call(this, {
 				type: attr,
 				target: this,
 				batchNum: batchNum
 			}, [newVal, oldVal]);
 
 			if(how === "remove" || how === "add") {
-				canBatch.trigger.call(this, {
+				canEvent.dispatch.call(this, {
 					type: "__keys",
 					target: this,
 					batchNum: batchNum
