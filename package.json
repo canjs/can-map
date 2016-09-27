@@ -46,6 +46,7 @@
     "npmAlgorithm": "flat"
   },
   "dependencies": {
+    "can-compute": "^3.0.0-pre.15",
     "can-construct": "^3.0.0-pre.8",
     "can-event": "^3.0.0-pre.9",
     "can-observation": "^3.0.0-pre.11",
