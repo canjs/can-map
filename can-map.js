@@ -46,7 +46,7 @@ var Map = Construct.extend(
 		// Called when a Map constructor is defined/extended to
 		// perform any initialization behavior for the new constructor
 		// function.
-		setup: function () {
+		setup: function (baseMap) {
 
 			Construct.setup.apply(this, arguments);
 
@@ -94,7 +94,7 @@ var Map = Construct.extend(
 
 				// If define is a function, call it with this can.Map
 				if(mapHelpers.define) {
-					mapHelpers.define(this);
+					mapHelpers.define(this, baseMap.prototype.define);
 				}
 			}
 

@@ -7,6 +7,7 @@ var isArray = require('can-util/js/is-array/is-array');
 var isPromise = require('can-util/js/is-promise/is-promise');
 var CID = require('can-util/js/cid/cid');
 var types = require('can-util/js/types/types');
+var assign = require('can-util/js/assign/assign');
 // ## POJOs to Map instance helpers
 
 // ### madeMap
@@ -189,6 +190,12 @@ var mapHelpers = {
 	// `undefined` if nothing has been already created.
 	getMapFromObject: function (obj) {
 		return madeMap && madeMap[obj._cid] && madeMap[obj._cid].instance;
+	},
+	twoLevelDeepExtend: function (destination, source) {
+		for (var prop in source) {
+			destination[prop] = destination[prop] || {};
+			assign(destination[prop], source[prop]);
+		}
 	}
 };
 
