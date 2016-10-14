@@ -21,11 +21,14 @@ var canBatch = require('can-event/batch/batch');
 var eventLifecycle = require('can-event/lifecycle/lifecycle');
 var Construct = require('can-construct');
 var Observation = require('can-observation');
+var ObserveReader = require('can-observation/reader/reader');
+var canCompute = require('can-compute');
 
 var namespace = require("can-util/namespace");
 var dev = require("can-util/js/dev/dev");
 var CID = require("can-util/js/cid/cid");
 var deepAssign = require("can-util/js/deep-assign/deep-assign");
+var isFunction = require("can-util/js/is-function/is-function");
 var assign = require("can-util/js/assign/assign");
 var types = require("can-util/js/types/types");
 var isArray = require("can-util/js/is-array/is-array");
@@ -599,6 +602,27 @@ var Map = Construct.extend(
 			bubble.unbind(this, eventName);
 			return eventLifecycle.removeAndTeardown.apply(this, arguments);
 
+		},
+
+		// ### compute
+		// Creates a compute that represents a value on this map. If the property is a function
+		// on the prototype, a "function" compute wil be created.
+		// Otherwise, a compute will be created that reads the observable attributes
+		compute: function (prop) {
+			if (isFunction(this.constructor.prototype[prop])) {
+				return canCompute(this[prop], this);
+			} else {
+				var reads = ObserveReader.reads(prop);
+				var last = reads.length - 1;
+
+				return canCompute(function (newVal) {
+					if (arguments.length) {
+						ObserveReader.write(this, reads[last].key, newVal);
+					} else {
+						return ObserveReader.get(this, reads[last].key);
+					}
+				}, this);
+			}
 		},
 
 		// ### each

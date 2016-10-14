@@ -310,3 +310,30 @@ test("ObserveReader - can.Construct derived classes should be considered objects
 	read = observeReader.read(obj, observeReader.reads("next_level.thing.self.text"), { });
 	equal(read.value, "bar", "anonymous functions in the middle of a read should be executed if requested");
 });
+
+test("Basic Map.prototype.compute", function () {
+
+	var state = new Map({
+		category: 5,
+		productType: 4
+	});
+	var catCompute = state.compute('category');
+	var prodCompute = state.compute('productType');
+
+	catCompute.bind("change", function (ev, val, old) {
+		equal(val, 6, "correct");
+		equal(old, 5, "correct");
+	});
+
+	state.bind('productType', function(ev, val, old) {
+		equal(val, 5, "correct");
+		equal(old, 4, "correct");
+	});
+
+	state.attr("category", 6);
+	prodCompute(5);
+
+	catCompute.unbind("change");
+	state.unbind("productType");
+
+});
