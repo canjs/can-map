@@ -619,7 +619,7 @@ var Map = Construct.extend(
 					if (arguments.length) {
 						ObserveReader.write(this, reads[last].key, newVal);
 					} else {
-						return ObserveReader.get(this, reads[last].key);
+						return ObserveReader.get(this, prop);
 					}
 				}, this);
 			}
