@@ -337,3 +337,32 @@ test("Basic Map.prototype.compute", function () {
 	state.unbind("productType");
 
 });
+
+test("Deep Map.prototype.compute", function () {
+
+	var state = new Map({
+		product: {
+			category: 5,
+			productType: 4
+		}
+	});
+	var catCompute = state.compute('product.category');
+	var prodCompute = state.compute('product.productType');
+
+	catCompute.bind("change", function (ev, val, old) {
+		equal(val, 6, "correct");
+		equal(old, 5, "correct");
+	});
+
+	state.attr('product').bind('productType', function(ev, val, old) {
+		equal(val, 5, "correct");
+		equal(old, 4, "correct");
+	});
+
+	state.attr("product.category", 6);
+	prodCompute(5);
+
+	catCompute.unbind("change");
+	state.unbind("productType");
+
+});
