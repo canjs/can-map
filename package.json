@@ -43,12 +43,12 @@
     "can-util": "^3.0.1"
   },
   "devDependencies": {
-    "bit-docs": "0.0.6",
+    "bit-docs": "0.0.7",
     "jshint": "^2.9.1",
     "steal": "^0.16.35",
     "steal-qunit": "^0.1.1",
     "steal-tools": "^0.16.8",
-    "testee": "^0.2.4",
+    "testee": "^0.3.0",
     "generator-donejs": "^0.9.0",
     "donejs-cli": "^0.9.5",
     "done-serve": "^0.2.0"
