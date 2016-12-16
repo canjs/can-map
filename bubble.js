@@ -24,7 +24,7 @@
 var canEvent = require('can-event');
 
 var makeArray = require('can-util/js/make-array/make-array');
-var types = require('can-util/js/types/types');
+var types = require('can-types');
 var isEmptyObject = require('can-util/js/is-empty-object/is-empty-object');
 
 

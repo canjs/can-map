@@ -5,8 +5,8 @@
 var isPlainObject = require('can-util/js/is-plain-object/is-plain-object');
 var isArray = require('can-util/js/is-array/is-array');
 var isPromise = require('can-util/js/is-promise/is-promise');
-var CID = require('can-util/js/cid/cid');
-var types = require('can-util/js/types/types');
+var CID = require('can-cid');
+var types = require('can-types');
 var assign = require('can-util/js/assign/assign');
 // ## POJOs to Map instance helpers
 

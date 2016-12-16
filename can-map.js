@@ -24,13 +24,13 @@ var Observation = require('can-observation');
 var ObserveReader = require('can-observation/reader/reader');
 var canCompute = require('can-compute');
 
-var namespace = require("can-util/namespace");
+var namespace = require("can-namespace");
 var dev = require("can-util/js/dev/dev");
-var CID = require("can-util/js/cid/cid");
+var CID = require("can-cid");
 var deepAssign = require("can-util/js/deep-assign/deep-assign");
 var isFunction = require("can-util/js/is-function/is-function");
 var assign = require("can-util/js/assign/assign");
-var types = require("can-util/js/types/types");
+var types = require("can-types");
 var isArray = require("can-util/js/is-array/is-array");
 
 // properties that can't be observed on ... no matter what
