@@ -259,11 +259,11 @@ test('_bindings count maintained after calling .off() on undefined property (#14
 
 	map.on('test', function(){});
 
-	equal(map._bindings, 1, 'The number of bindings is correct');
+	equal(map.__bindEvents._lifecycleBindings, 1, 'The number of bindings is correct');
 
 	map.off('undefined_property');
 
-	equal(map._bindings, 1, 'The number of bindings is still correct');
+	equal(map.__bindEvents._lifecycleBindings, 1, 'The number of bindings is still correct');
 });
 
 test("Should be able to get and set attribute named 'watch' on Map in Firefox", function() {
