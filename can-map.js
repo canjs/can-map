@@ -23,6 +23,9 @@ var Construct = require('can-construct');
 var Observation = require('can-observation');
 var ObserveReader = require('can-observation/reader/reader');
 var canCompute = require('can-compute');
+// TODO update this to use 'can-util/js/single-reference/single-reference' once the canReflect
+//   updates from can-compute/single-reference are merged into it.
+var singleReference = require('can-compute/single-reference');
 
 var namespace = require("can-namespace");
 var dev = require("can-util/js/dev/dev");
@@ -31,12 +34,16 @@ var deepAssign = require("can-util/js/deep-assign/deep-assign");
 var isFunction = require("can-util/js/is-function/is-function");
 var assign = require("can-util/js/assign/assign");
 var types = require("can-types");
-var isArray = require("can-util/js/is-array/is-array");
+var canReflect = require("can-reflect");
+var canSymbol = require("can-symbol");
 
 // properties that can't be observed on ... no matter what
 var unobservable = {
 	"constructor": true
 };
+
+var hasOwnProperty = ({}).hasOwnProperty;
+var setValueSymbol = canSymbol.for("can.setValue");
 
 // Extend [can.Construct](../construct/construct.html) to make inheriting a `can.Map` easier.
 var Map = Construct.extend(
@@ -128,18 +135,14 @@ var Map = Construct.extend(
 		// ### bind,  unbind
 		// Listen to events on the Map constructor.  These
 		// are here mostly for can.Model.
-        addEventListener: eventLifecycle.addAndSetup,
-    	removeEventListener: eventLifecycle.removeAndTeardown,
+		addEventListener: eventLifecycle.addAndSetup,
+		removeEventListener: eventLifecycle.removeAndTeardown,
 
 		// ### keys
 		// An observable way to get the keys from a map.
 		keys: function (map) {
-			var keys = [];
 			Observation.add(map, '__keys');
-			for (var keyName in map._data) {
-				keys.push(keyName);
-			}
-			return keys;
+			return canReflect.getOwnEnumerableKeys(map._data);
 		}
 	},
 	/**
@@ -151,12 +154,12 @@ var Map = Construct.extend(
 		// Initializes the map instance's behavior.
 		setup: function (obj) {
 
-			if(obj instanceof Map){
+			if(canReflect.isObservableLike(obj) && typeof obj.serialize === "function"){
 				obj = obj.serialize();
 			}
 
 			// Where we keep the values of the compute.
-			this._data = {};
+			this._data = Object.create(null);
 
 			// The namespace this `object` uses to listen to events.
 			CID(this, ".map");
@@ -191,7 +194,7 @@ var Map = Construct.extend(
 		// }
 		// ```
 		_setupComputedProperties: function () {
-			this._computedAttrs = {};
+			this._computedAttrs = Object.create(null);
 
 			var computes = this.constructor._computedPropertyNames;
 
@@ -253,7 +256,7 @@ var Map = Construct.extend(
 
 				var current = this.__get( first );
 
-				return current && current._get ?  current._get(second) : undefined;
+				return current && canReflect.getKeyValue(current, second);
 			} else {
 				return this.__get( attr );
 			}
@@ -280,7 +283,7 @@ var Map = Construct.extend(
 					// return computedAttr.compute();
 					return computedAttr.compute();
 				} else {
-					return this._data.hasOwnProperty(attr) ? this._data[attr] : undefined;
+					return hasOwnProperty.call(this._data, attr) ? this._data[attr] : undefined;
 				}
 			} else {
 				return this._data;
@@ -308,8 +311,8 @@ var Map = Construct.extend(
 
 				current =  this.__inSetup ? undefined : this.___get( first );
 
-				if( types.isMapLike(current) ) {
-					current._set(second, value);
+				if( canReflect.isMapLike(current) ) {
+					canReflect.setKeyValue(current, second, value);
 				} else {
 					throw new Error("can-map: Object does not exist");
 				}
@@ -335,7 +338,11 @@ var Map = Construct.extend(
 		// list or map instance is used.
 		__type: function(value, prop){
 
-			if (typeof value === "object" && !types.isMapLike( value ) && mapHelpers.canMakeObserve(value) && !isArray(value) ) {
+			if (typeof value === "object" &&
+				!canReflect.isObservableLike( value ) && 
+				mapHelpers.canMakeObserve(value) &&
+				!canReflect.isListLike(value)
+			) {
 
 				var cached = mapHelpers.getMapFromObject(value);
 				if(cached) {
@@ -358,8 +365,8 @@ var Map = Construct.extend(
 				var computedAttr = this._computedAttrs[prop];
 
 				// Dispatch an "add" event if adding a new property.
-				var changeType = computedAttr || current !== undefined || this.___get()
-					.hasOwnProperty(prop) ? "set" : "add";
+				var changeType = computedAttr || current !== undefined || 
+					hasOwnProperty.call(this.___get(), prop) ? "set" : "add";
 
 				// Set the value on `_data` and set up bubbling.
 				this.___set(prop, typeof value === "object" ? bubble.set(this, prop, value, current) : value );
@@ -413,7 +420,7 @@ var Map = Construct.extend(
 
 			// If we have more parts, call `removeAttr` on that part.
 			if (parts.length && current) {
-				return current.removeAttr(parts);
+				return canReflect.deleteKeyValue(current, parts.join("."));
 			} else {
 
 				// If attr does not have a `.`
@@ -491,8 +498,18 @@ var Map = Construct.extend(
 					newVal = self.__convert( prop, newVal );
 				}
 
-				if ( types.isMapLike(curVal) && mapHelpers.canMakeObserve(newVal) ) {
-					curVal.attr(newVal, remove);
+				if ( canReflect.isMapLike(curVal) && mapHelpers.canMakeObserve(newVal) ) {
+					if (setValueSymbol in curVal) {
+						curVal[setValueSymbol](newVal, remove);
+					} else {
+						canReflect.eachKey(curVal, function(val, key) {
+							if (newVal[key]) {
+								canReflect.setKeyValue(curVal, key, val);
+							} else if (remove) {
+								canReflect.deleteKeyValue(curVal, key);
+							}
+						});
+					}
 					// Otherwise just set.
 				} else if (curVal !== newVal) {
 					self.__set(prop, self.__type(newVal, prop), curVal);
@@ -569,7 +586,7 @@ var Map = Construct.extend(
 			if (computedBinding && computedBinding.compute) {
 				if (!computedBinding.count) {
 					computedBinding.count = 1;
-					computedBinding.compute.addEventListener("change", computedBinding.handler);
+					canReflect.onValue(computedBinding.compute, computedBinding.handler);
 				} else {
 					computedBinding.count++;
 				}
@@ -591,7 +608,7 @@ var Map = Construct.extend(
 			if (computedBinding) {
 				if (computedBinding.count === 1) {
 					computedBinding.count = 0;
-					computedBinding.compute.removeEventListener("change", computedBinding.handler);
+					canReflect.offValue(computedBinding.compute, computedBinding.handler);
 				} else {
 					computedBinding.count--;
 				}
@@ -645,7 +662,7 @@ var Map = Construct.extend(
 		_each: function (callback) {
 			var data = this.___get();
 			for (var prop in data) {
-				if (data.hasOwnProperty(prop)) {
+				if (hasOwnProperty.call(data, prop)) {
 					callback(data[prop], prop);
 				}
 			}
@@ -663,6 +680,34 @@ Map.prototype.on = Map.prototype.bind = Map.prototype.addEventListener;
 Map.prototype.off = Map.prototype.unbind = Map.prototype.removeEventListener;
 Map.on = Map.bind = Map.addEventListener;
 Map.off = Map.unbind = Map.removeEventListener;
+
+canReflect.set(Map.prototype, canSymbol.for("can.onKeyValue"), function(key, handler){
+	var translationHandler = function(ev, newValue){
+		handler(newValue);
+	};
+	singleReference.set(handler, this, translationHandler, key);
+
+	this.addEventListener(key, translationHandler);
+});
+
+canReflect.set(Map.prototype, canSymbol.for("can.offKeyValue"), function(key, handler){
+	this.removeEventListener(key, singleReference.getAndDelete(handler, this, key) );
+});
+
+// Setup other symbols
+Map.prototype[canSymbol.for("can.isMapLike")] = true;
+Map.prototype[canSymbol.for("can.isListLike")] = false;
+Map.prototype[canSymbol.for("can.isValueLike")] = false;
+Map.prototype[canSymbol.for("can.getKeyValue")] = Map.prototype._get;
+Map.prototype[canSymbol.for("can.setKeyValue")] = Map.prototype._set;
+Map.prototype[setValueSymbol] = Map.prototype._setAttrs;
+Map.prototype[canSymbol.for("can.deleteKeyValue")] = Map.prototype._remove;
+Map.prototype[canSymbol.for("can.keyHasDependencies")] = function(key) {
+	return !!this.__bindEvents && this.__bindEvents[key].length > 0;
+};
+Map.prototype[canSymbol.for("can.getKeyDependencies")] = function(key) {
+	return this.__bindEvents && this.__bindEvents[key];
+};
 
 var oldIsMapLike = types.isMapLike;
 types.isMapLike = function(obj){

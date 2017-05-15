@@ -5,6 +5,8 @@ var QUnit = require('steal-qunit');
 var Observation = require('can-observation');
 var Construct = require('can-construct');
 var observeReader = require('can-observation/reader/reader');
+var canReflect = require('can-reflect');
+var canSymbol = require('can-symbol');
 
 QUnit.module('can-map');
 
@@ -259,11 +261,11 @@ test('_bindings count maintained after calling .off() on undefined property (#14
 
 	map.on('test', function(){});
 
-	equal(map._bindings, 1, 'The number of bindings is correct');
+	equal(map.__bindEvents._lifecycleBindings, 1, 'The number of bindings is correct');
 
 	map.off('undefined_property');
 
-	equal(map._bindings, 1, 'The number of bindings is still correct');
+	equal(map.__bindEvents._lifecycleBindings, 1, 'The number of bindings is still correct');
 });
 
 test("Should be able to get and set attribute named 'watch' on Map in Firefox", function() {
@@ -364,4 +366,70 @@ test("Deep Map.prototype.compute", function () {
 	catCompute.unbind("change");
 	state.unbind("productType");
 
+});
+
+test("works with can-reflect", 9, function(){
+	var c = new Map({ "foo": "bar" });
+
+	QUnit.equal( canReflect.getKeyValue(c, "foo"), "bar", "unbound value");
+
+	var handler = function(newValue){
+		QUnit.equal(newValue, "baz", "observed new value");
+
+		// Turn off the "foo" handler but "thud" should still be bound.
+		canReflect.offKeyValue(c, "foo", handler);
+	};
+	QUnit.ok(!canReflect.isValueLike(c), "isValueLike is false");
+	QUnit.ok(canReflect.isMapLike(c), "isMapLike is true");
+	QUnit.ok(!canReflect.isListLike(c), "isListLike is false");
+
+	QUnit.ok( !canReflect.keyHasDependencies(c, "foo"), "keyHasDependencies -- false");
+
+	canReflect.onKeyValue(c, "foo", handler);
+	// Do a second binding to check that you can unbind correctly.
+	canReflect.onKeyValue(c, "thud", handler);
+	QUnit.ok( canReflect.keyHasDependencies(c, "foo"), "keyHasDependencies -- true");
+
+	c.attr("foo", "baz");
+	c.attr("thud", "baz");
+
+	QUnit.equal( canReflect.getKeyValue(c, "foo"), "baz", "bound value");
+	c.attr("foo", "quux");
+
+});
+
+QUnit.test("can-reflect setKeyValue", function(){
+	var a = new Map({ "a": "b" });
+
+	canReflect.setKeyValue(a, "a", "c");
+	QUnit.equal(a.attr("a"), "c", "setKeyValue");
+});
+
+QUnit.test("can-reflect getKeyDependencies", function() { 
+	var a = new Map({ "a": "a" });
+
+	ok(!canReflect.getKeyDependencies(a, "a"), "No dependencies before binding");
+	a.on("a", function() {});
+	ok(canReflect.getKeyDependencies(a, "a"), "dependencies exist");
+	equal(canReflect.getKeyDependencies(a, "a"), a.__bindEvents.a, "dependencies returned");
+
+});
+
+QUnit.test("registered symbols", function() { 
+	var a = new Map({ "a": "a" });
+
+	ok(a[canSymbol.for("can.isMapLike")], "can.isMapLike");
+	equal(a[canSymbol.for("can.getKeyValue")]("a"), "a", "can.getKeyValue");
+	a[canSymbol.for("can.setKeyValue")]("a", "b");
+	equal(a.attr("a"), "b", "can.setKeyValue");
+
+	function handler(val) {
+		equal(val, "c", "can.onKeyValue");
+	}
+
+	a[canSymbol.for("can.onKeyValue")]("a", handler);
+	a.attr("a", "c");
+
+	a[canSymbol.for("can.offKeyValue")]("a", handler);
+	a.attr("a", "d"); // doesn't trigger handler
 });
