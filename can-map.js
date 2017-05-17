@@ -682,8 +682,8 @@ Map.on = Map.bind = Map.addEventListener;
 Map.off = Map.unbind = Map.removeEventListener;
 
 canReflect.set(Map.prototype, canSymbol.for("can.onKeyValue"), function(key, handler){
-	var translationHandler = function(ev, newValue){
-		handler(newValue);
+	var translationHandler = function(ev, newValue, oldValue){
+		handler(newValue, oldValue);
 	};
 	singleReference.set(handler, this, translationHandler, key);
 
@@ -700,13 +700,15 @@ Map.prototype[canSymbol.for("can.isListLike")] = false;
 Map.prototype[canSymbol.for("can.isValueLike")] = false;
 Map.prototype[canSymbol.for("can.getKeyValue")] = Map.prototype._get;
 Map.prototype[canSymbol.for("can.setKeyValue")] = Map.prototype._set;
+//Map.prototype[canSymbol.for("can.getValue")] = Map.prototype._getAttrs;
 Map.prototype[setValueSymbol] = Map.prototype._setAttrs;
 Map.prototype[canSymbol.for("can.deleteKeyValue")] = Map.prototype._remove;
 Map.prototype[canSymbol.for("can.keyHasDependencies")] = function(key) {
-	return !!this.__bindEvents && this.__bindEvents[key].length > 0;
+	return this._computedAttrs && this._computedAttrs[key] &&
+		this._computedAttrs[key].compute && canReflect.valueHasDependencies(this._computedAttrs[key].compute);
 };
 Map.prototype[canSymbol.for("can.getKeyDependencies")] = function(key) {
-	return this.__bindEvents && this.__bindEvents[key];
+	return this._computedAttrs && this._computedAttrs[key] && canReflect.getValueDependencies(this._computedAttrs[key].compute);
 };
 
 var oldIsMapLike = types.isMapLike;

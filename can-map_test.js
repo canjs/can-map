@@ -7,6 +7,7 @@ var Construct = require('can-construct');
 var observeReader = require('can-observation/reader/reader');
 var canReflect = require('can-reflect');
 var canSymbol = require('can-symbol');
+var canCompute = require('can-compute');
 
 QUnit.module('can-map');
 
@@ -369,32 +370,39 @@ test("Deep Map.prototype.compute", function () {
 });
 
 test("works with can-reflect", 9, function(){
-	var c = new Map({ "foo": "bar" });
+	var b = new Map({ "foo": "bar" });
+	var c = new (Map.extend({
+		"baz": canCompute(function(){
+			return b.attr("foo");
+		})
+	}))({ "foo": "bar", thud: "baz" });
 
-	QUnit.equal( canReflect.getKeyValue(c, "foo"), "bar", "unbound value");
+	QUnit.equal( canReflect.getKeyValue(b, "foo"), "bar", "unbound value");
 
 	var handler = function(newValue){
-		QUnit.equal(newValue, "baz", "observed new value");
+		QUnit.equal(newValue, "quux", "observed new value");
 
 		// Turn off the "foo" handler but "thud" should still be bound.
-		canReflect.offKeyValue(c, "foo", handler);
+		canReflect.offKeyValue(c, "baz", handler);
 	};
 	QUnit.ok(!canReflect.isValueLike(c), "isValueLike is false");
 	QUnit.ok(canReflect.isMapLike(c), "isMapLike is true");
 	QUnit.ok(!canReflect.isListLike(c), "isListLike is false");
 
-	QUnit.ok( !canReflect.keyHasDependencies(c, "foo"), "keyHasDependencies -- false");
+	QUnit.ok( !canReflect.keyHasDependencies(c, "baz"), "keyHasDependencies -- false");
 
-	canReflect.onKeyValue(c, "foo", handler);
+	canReflect.onKeyValue(c, "baz", handler);
 	// Do a second binding to check that you can unbind correctly.
 	canReflect.onKeyValue(c, "thud", handler);
-	QUnit.ok( canReflect.keyHasDependencies(c, "foo"), "keyHasDependencies -- true");
+	QUnit.ok( canReflect.keyHasDependencies(c, "baz"), "keyHasDependencies -- true");
 
-	c.attr("foo", "baz");
-	c.attr("thud", "baz");
+	b.attr("foo", "quux");
+	c.attr("thud", "quux");
 
-	QUnit.equal( canReflect.getKeyValue(c, "foo"), "baz", "bound value");
-	c.attr("foo", "quux");
+	QUnit.equal( canReflect.getKeyValue(c, "baz"), "quux", "bound value");
+	// sanity checks to ensure that handler doesn't get called again.
+	b.attr("foo", "thud");
+	c.attr("baz", "jeek");
 
 });
 
@@ -407,11 +415,16 @@ QUnit.test("can-reflect setKeyValue", function(){
 
 QUnit.test("can-reflect getKeyDependencies", function() { 
 	var a = new Map({ "a": "a" });
+	var b = new (Map.extend({
+		"a": canCompute(function(){
+			return a.attr("a");
+		})
+	}))();
 
-	ok(!canReflect.getKeyDependencies(a, "a"), "No dependencies before binding");
-	a.on("a", function() {});
-	ok(canReflect.getKeyDependencies(a, "a"), "dependencies exist");
-	equal(canReflect.getKeyDependencies(a, "a"), a.__bindEvents.a, "dependencies returned");
+	ok(!canReflect.getKeyDependencies(b, "a"), "No dependencies before binding");
+	b.on("a", function() {});
+	ok(canReflect.getKeyDependencies(b, "a"), "dependencies exist");
+	ok(canReflect.getKeyDependencies(b, "a").keyDependencies.has(a), "dependencies returned");
 
 });
 
