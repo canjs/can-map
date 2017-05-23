@@ -437,6 +437,7 @@ QUnit.test("registered symbols", function() {
 	equal(a.attr("a"), "b", "can.setKeyValue");
 
 	function handler(val) {
+		equal(this, a);
 		equal(val, "c", "can.onKeyValue");
 	}
 

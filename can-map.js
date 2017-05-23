@@ -683,7 +683,7 @@ Map.off = Map.unbind = Map.removeEventListener;
 
 canReflect.set(Map.prototype, canSymbol.for("can.onKeyValue"), function(key, handler){
 	var translationHandler = function(ev, newValue, oldValue){
-		handler(newValue, oldValue);
+		handler.call(this, newValue, oldValue);
 	};
 	singleReference.set(handler, this, translationHandler, key);
 
