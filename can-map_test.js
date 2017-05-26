@@ -235,7 +235,8 @@ test("Fast dispatch event still has target and type (#1082)", 4, function() {
 });
 
 test("map passed to Map constructor (#1166)", function(){
-	function y() {};
+	function y() {}
+	
 	var map = new Map({
 		x: 1,
 		y: y
