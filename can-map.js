@@ -634,7 +634,7 @@ var Map = Construct.extend(
 
 				return canCompute(function (newVal) {
 					if (arguments.length) {
-						ObserveReader.write(this, reads[last].key, newVal);
+						ObserveReader.write(this, reads[last].key, newVal, {});
 					} else {
 						return ObserveReader.get(this, prop);
 					}
@@ -700,7 +700,7 @@ Map.prototype[canSymbol.for("can.isListLike")] = false;
 Map.prototype[canSymbol.for("can.isValueLike")] = false;
 Map.prototype[canSymbol.for("can.getKeyValue")] = Map.prototype._get;
 Map.prototype[canSymbol.for("can.setKeyValue")] = Map.prototype._set;
-//Map.prototype[canSymbol.for("can.getValue")] = Map.prototype._getAttrs;
+Map.prototype[canSymbol.for("can.getValue")] = Map.prototype._getAttrs;
 Map.prototype[setValueSymbol] = Map.prototype._setAttrs;
 Map.prototype[canSymbol.for("can.deleteKeyValue")] = Map.prototype._remove;
 Map.prototype[canSymbol.for("can.keyHasDependencies")] = function(key) {
