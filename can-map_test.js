@@ -235,10 +235,15 @@ test("Fast dispatch event still has target and type (#1082)", 4, function() {
 });
 
 test("map passed to Map constructor (#1166)", function(){
-	var map = new Map({x: 1});
+	function y() {};
+	var map = new Map({
+		x: 1,
+		y: y
+	});
 	var res = new Map(map);
 	deepEqual(res.attr(), {
-		x: 1
+		x: 1,
+		y: y
 	}, "has the same properties");
 });
 
