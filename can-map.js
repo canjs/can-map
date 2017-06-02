@@ -36,6 +36,7 @@ var assign = require("can-util/js/assign/assign");
 var types = require("can-types");
 var canReflect = require("can-reflect");
 var canSymbol = require("can-symbol");
+var CIDSet = require('can-util/js/cid-set/cid-set');
 
 // properties that can't be observed on ... no matter what
 var unobservable = {
@@ -707,11 +708,17 @@ Map.prototype[canSymbol.for("can.getValue")] = Map.prototype._getAttrs;
 Map.prototype[setValueSymbol] = Map.prototype._setAttrs;
 Map.prototype[canSymbol.for("can.deleteKeyValue")] = Map.prototype._remove;
 Map.prototype[canSymbol.for("can.keyHasDependencies")] = function(key) {
-	return this._computedAttrs && this._computedAttrs[key] &&
-		this._computedAttrs[key].compute && canReflect.valueHasDependencies(this._computedAttrs[key].compute);
+	return !!(this._computedAttrs && this._computedAttrs[key] &&
+		this._computedAttrs[key].compute);
 };
 Map.prototype[canSymbol.for("can.getKeyDependencies")] = function(key) {
-	return this._computedAttrs && this._computedAttrs[key] && canReflect.getValueDependencies(this._computedAttrs[key].compute);
+	var ret;
+	if(this._computedAttrs && this._computedAttrs[key] && this._computedAttrs[key].compute) {
+		ret = {};
+		ret.valueDependencies = new CIDSet();
+		ret.valueDependencies.add(this._computedAttrs[key].compute);
+	}
+	return ret;
 };
 Map.prototype[canSymbol.for("can.getOwnEnumerableKeys")] = function() {
 	return Object.keys(this._data);

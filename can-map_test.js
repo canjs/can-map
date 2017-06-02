@@ -236,7 +236,7 @@ test("Fast dispatch event still has target and type (#1082)", 4, function() {
 
 test("map passed to Map constructor (#1166)", function(){
 	function y() {}
-	
+
 	var map = new Map({
 		x: 1,
 		y: y
@@ -375,7 +375,7 @@ test("Deep Map.prototype.compute", function () {
 
 });
 
-test("works with can-reflect", 9, function(){
+test("works with can-reflect", 7, function(){
 	var b = new Map({ "foo": "bar" });
 	var c = new (Map.extend({
 		"baz": canCompute(function(){
@@ -395,12 +395,9 @@ test("works with can-reflect", 9, function(){
 	QUnit.ok(canReflect.isMapLike(c), "isMapLike is true");
 	QUnit.ok(!canReflect.isListLike(c), "isListLike is false");
 
-	QUnit.ok( !canReflect.keyHasDependencies(c, "baz"), "keyHasDependencies -- false");
-
 	canReflect.onKeyValue(c, "baz", handler);
 	// Do a second binding to check that you can unbind correctly.
 	canReflect.onKeyValue(c, "thud", handler);
-	QUnit.ok( canReflect.keyHasDependencies(c, "baz"), "keyHasDependencies -- true");
 
 	b.attr("foo", "quux");
 	c.attr("thud", "quux");
@@ -424,13 +421,18 @@ QUnit.test("can-reflect getKeyDependencies", function() {
 	var b = new (Map.extend({
 		"a": canCompute(function(){
 			return a.attr("a");
-		})
+		}),
+		"b": "b"
 	}))();
 
-	ok(!canReflect.getKeyDependencies(b, "a"), "No dependencies before binding");
+	ok(canReflect.getKeyDependencies(b, "a"), "Dependencies on computed attr");
+	ok(!canReflect.getKeyDependencies(b, "b"), "No dependencies on data attr");
 	b.on("a", function() {});
-	ok(canReflect.getKeyDependencies(b, "a"), "dependencies exist");
-	ok(canReflect.getKeyDependencies(b, "a").keyDependencies.has(a), "dependencies returned");
+	ok(canReflect.getKeyDependencies(b, "a").valueDependencies.has(b._computedAttrs.a.compute), "dependencies returned");
+	ok(
+		canReflect.getValueDependencies(b._computedAttrs.a.compute).valueDependencies,
+		"dependencies returned from compute"
+	);
 
 });
 
