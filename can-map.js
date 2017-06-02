@@ -469,8 +469,11 @@ var Map = Construct.extend(
 		// First, goes through all current properties and either merges
 		// or removes old properties.
 		// Then it goes through the remaining ones to be added and sets those properties.
-		_setAttrs: function (props, remove) {
-			props = assign({}, props);
+		_setAttrs: function (_props, remove) {
+			var props = {};
+			canReflect.eachKey(_props, function(value, prop) {
+				props[prop] = value;
+			});
 			var prop,
 				self = this,
 				newVal;
@@ -709,6 +712,9 @@ Map.prototype[canSymbol.for("can.keyHasDependencies")] = function(key) {
 };
 Map.prototype[canSymbol.for("can.getKeyDependencies")] = function(key) {
 	return this._computedAttrs && this._computedAttrs[key] && canReflect.getValueDependencies(this._computedAttrs[key].compute);
+};
+Map.prototype[canSymbol.for("can.getOwnEnumerableKeys")] = function() {
+	return Object.keys(this._data);
 };
 
 var oldIsMapLike = types.isMapLike;

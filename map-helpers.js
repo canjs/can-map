@@ -113,7 +113,7 @@ var mapHelpers = {
 		if(how === "attr") {
 			how = canSymbol.for("can.getValue");
 		}
-		if( canReflect.isMapLike(val) && val[how] ) {
+		if( canReflect.isObservableLike(val) && val[how] ) {
 			return val[how]();
 		} else {
 			return val;
