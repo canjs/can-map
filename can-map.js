@@ -23,9 +23,7 @@ var Construct = require('can-construct');
 var Observation = require('can-observation');
 var ObserveReader = require('can-observation/reader/reader');
 var canCompute = require('can-compute');
-// TODO update this to use 'can-util/js/single-reference/single-reference' once the canReflect
-//   updates from can-compute/single-reference are merged into it.
-var singleReference = require('can-compute/single-reference');
+var singleReference = require('can-util/js/single-reference/single-reference');
 
 var namespace = require("can-namespace");
 var dev = require("can-util/js/dev/dev");
