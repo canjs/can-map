@@ -36,15 +36,15 @@
   },
   "dependencies": {
     "can-cid": "^1.0.0",
-    "can-compute": "^3.1.0-pre.9",
-    "can-construct": "^3.0.0",
-    "can-event": "^3.3.0",
+    "can-compute": "^3.1.0-pre.13",
+    "can-construct": "^3.2.0-pre.0",
+    "can-event": "^3.5.0-pre.2",
     "can-namespace": "^1.0.0",
-    "can-observation": "^3.2.0-pre.9",
-    "can-reflect": "^1.0.0-pre.1",
+    "can-observation": "^3.2.0-pre.15",
+    "can-reflect": "^1.0.0-pre.2",
     "can-symbol": "^1.0.0-pre.0",
-    "can-types": "^1.0.1",
-    "can-util": "^3.9.0-pre.0"
+    "can-types": "^1.1.0-pre.1",
+    "can-util": "^3.9.0-pre.3"
   },
   "devDependencies": {
     "bit-docs": "0.0.7",
