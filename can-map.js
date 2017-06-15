@@ -724,15 +724,6 @@ Map.prototype[canSymbol.for("can.getOwnEnumerableKeys")] = function() {
 	return Object.keys(this._data);
 };
 
-var oldIsMapLike = types.isMapLike;
-types.isMapLike = function(obj){
-    if(obj instanceof Map) {
-        return true;
-    } else {
-        return oldIsMapLike.call(this, obj);
-    }
-};
-
 if(!types.DefaultMap) {
 	types.DefaultMap = Map;
 }
