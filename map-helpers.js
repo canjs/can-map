@@ -6,8 +6,9 @@ var isPlainObject = require('can-util/js/is-plain-object/is-plain-object');
 var isArray = require('can-util/js/is-array/is-array');
 var isPromise = require('can-util/js/is-promise/is-promise');
 var CID = require('can-cid');
-var types = require('can-types');
 var assign = require('can-util/js/assign/assign');
+var canReflect = require('can-reflect');
+var canSymbol = require('can-symbol');
 // ## POJOs to Map instance helpers
 
 // ### madeMap
@@ -79,7 +80,7 @@ var mapHelpers = {
 			map.each(function (val, name) {
 				// If the value is an `object`, and has an `attr` or `serialize` function.
 				var result,
-					isObservable =  types.isMapLike(val),
+					isObservable = canReflect.isObservableLike(val),
 					serialized = isObservable && serializeMap[how][CID(val)];
 
 				if( serialized ) {
@@ -109,7 +110,10 @@ var mapHelpers = {
 	// If `val` is an observable, calls `how` on it; otherwise
 	// returns the value of `val`.
 	getValue: function(map, name, val, how){
-		if( types.isMapLike(val) ) {
+		if(how === "attr") {
+			how = canSymbol.for("can.getValue");
+		}
+		if( canReflect.isObservableLike(val) && val[how] ) {
 			return val[how]();
 		} else {
 			return val;
@@ -133,8 +137,8 @@ var mapHelpers = {
 		map._computedAttrs[attrName] = {
 			compute: compute,
 			count: 0,
-			handler: function (ev, newVal, oldVal) {
-				map._triggerChange(attrName, "set", newVal, oldVal, ev.batchNum);
+			handler: function (newVal, oldVal) {
+				map._triggerChange(attrName, "set", newVal, oldVal);
 			}
 		};
 	},
