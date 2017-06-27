@@ -35,6 +35,7 @@ var types = require("can-types");
 var canReflect = require("can-reflect");
 var canSymbol = require("can-symbol");
 var CIDSet = require('can-util/js/cid-set/cid-set');
+var CIDMap = require("can-util/js/cid-map/cid-map");
 
 // properties that can't be observed on ... no matter what
 var unobservable = {
@@ -42,7 +43,6 @@ var unobservable = {
 };
 
 var hasOwnProperty = ({}).hasOwnProperty;
-var setValueSymbol = canSymbol.for("can.setValue");
 
 // Extend [can.Construct](../construct/construct.html) to make inheriting a `can.Map` easier.
 var Map = Construct.extend(
@@ -164,7 +164,6 @@ var Map = Construct.extend(
 			CID(this, ".map");
 
 			this._setupComputedProperties();
-
 			var teardownMapping = obj && mapHelpers.addToMap(obj, this);
 
 			var defaultValues = this._setupDefaults(obj);
@@ -313,7 +312,14 @@ var Map = Construct.extend(
 				if( canReflect.isMapLike(current) ) {
 					canReflect.setKeyValue(current, second, value);
 				} else {
-					throw new Error("can-map: Object does not exist");
+					current = this.__inSetup ? undefined : this.___get( attr );
+
+					// //Convert if there is a converter.  Remove in 3.0.
+					if (this.__convert) {
+						value = this.__convert(attr, value);
+					}
+
+					this.__set(attr, this.__type(value, attr), current);
 				}
 
 			} else {
@@ -338,7 +344,7 @@ var Map = Construct.extend(
 		__type: function(value, prop){
 
 			if (typeof value === "object" &&
-				!canReflect.isObservableLike( value ) && 
+				!canReflect.isObservableLike( value ) &&
 				mapHelpers.canMakeObserve(value) &&
 				!canReflect.isListLike(value)
 			) {
@@ -364,7 +370,7 @@ var Map = Construct.extend(
 				var computedAttr = this._computedAttrs[prop];
 
 				// Dispatch an "add" event if adding a new property.
-				var changeType = computedAttr || current !== undefined || 
+				var changeType = computedAttr || current !== undefined ||
 					hasOwnProperty.call(this.___get(), prop) ? "set" : "add";
 
 				// Set the value on `_data` and set up bubbling.
@@ -455,85 +461,30 @@ var Map = Construct.extend(
 		// Serializes a property.  Uses map helpers to
 		// recursively serialize nested observables.
 		___serialize: function(name, val){
-			return mapHelpers.getValue(this, name, val, "serialize");
+			return canReflect.serialize(val, CIDMap);
 		},
 
 		// ### _getAttrs
 		// Returns the values of all attributes as a plain JavaScript object.
 		_getAttrs: function(){
-			return mapHelpers.serialize(this, 'attr', {});
+			return canReflect.unwrap(this, CIDMap);
 		},
 		// ### _setAttrs
 		// Sets multiple properties on this object at once.
 		// First, goes through all current properties and either merges
 		// or removes old properties.
 		// Then it goes through the remaining ones to be added and sets those properties.
-		_setAttrs: function (_props, remove) {
-			var props = {};
-			canReflect.eachKey(_props, function(value, prop) {
-				props[prop] = value;
-			});
-			var prop,
-				self = this,
-				newVal;
-
-			// Batch all of the change events until we are done.
-			canBatch.start();
-			// Merge current properties with the new ones.
-			this._each(function (curVal, prop) {
-				// You can not have a _cid property; abort.
-				if (prop === "_cid") {
-					return;
-				}
-				newVal = props[prop];
-
-				// If we are merging, remove the property if it has no value.
-				if (newVal === undefined) {
-					if (remove) {
-						self.removeAttr(prop);
-					}
-					return;
-				}
-
-				// Run converter if there is one. Remove in 3.0.
-				if (self.__convert) {
-					newVal = self.__convert( prop, newVal );
-				}
-
-				if ( canReflect.isMapLike(curVal) && mapHelpers.canMakeObserve(newVal) ) {
-					if (setValueSymbol in curVal) {
-						curVal[setValueSymbol](newVal, remove);
-					} else {
-						canReflect.eachKey(curVal, function(val, key) {
-							if (newVal[key]) {
-								canReflect.setKeyValue(curVal, key, val);
-							} else if (remove) {
-								canReflect.deleteKeyValue(curVal, key);
-							}
-						});
-					}
-					// Otherwise just set.
-				} else if (curVal !== newVal) {
-					self.__set(prop, self.__type(newVal, prop), curVal);
-				}
-
-				delete props[prop];
-			});
-			// Add remaining props.
-			for (prop in props) {
-				// Ignore _cid.
-				if (prop !== "_cid") {
-					newVal = props[prop];
-					this._set(prop, newVal, true);
-				}
-
+		_setAttrs: function (props, remove) {
+			if(remove === true) {
+				this[canSymbol.for("can.updateDeep")](props);
+			} else {
+				this[canSymbol.for("can.assignDeep")](props);
 			}
-			canBatch.stop();
 			return this;
 		},
 
 		serialize: function () {
-			return mapHelpers.serialize(this, 'serialize', {});
+			return canReflect.serialize(this, CIDMap);
 		},
 
 
@@ -685,44 +636,68 @@ Map.prototype.off = Map.prototype.unbind = Map.prototype.removeEventListener;
 Map.on = Map.bind = Map.addEventListener;
 Map.off = Map.unbind = Map.removeEventListener;
 
-canReflect.set(Map.prototype, canSymbol.for("can.onKeyValue"), function(key, handler){
-	var translationHandler = function(ev, newValue, oldValue){
-		handler.call(this, newValue, oldValue);
-	};
-	singleReference.set(handler, this, translationHandler, key);
+// - type -
 
-	this.addEventListener(key, translationHandler);
-});
+canReflect.assignSymbols(Map.prototype,{
+	// -type-
+	"can.isMapLike": true,
+	"can.isListLike":  false,
+	"can.isValueLike": false,
 
-canReflect.set(Map.prototype, canSymbol.for("can.offKeyValue"), function(key, handler){
-	this.removeEventListener(key, singleReference.getAndDelete(handler, this, key) );
-});
+	// -get/set-
+	"can.getKeyValue": Map.prototype._get,
+	"can.setKeyValue": Map.prototype._set,
+	"can.deleteKeyValue": Map.prototype._remove,
 
-// Setup other symbols
-Map.prototype[canSymbol.for("can.isMapLike")] = true;
-Map.prototype[canSymbol.for("can.isListLike")] = false;
-Map.prototype[canSymbol.for("can.isValueLike")] = false;
-Map.prototype[canSymbol.for("can.getKeyValue")] = Map.prototype._get;
-Map.prototype[canSymbol.for("can.setKeyValue")] = Map.prototype._set;
-Map.prototype[canSymbol.for("can.getValue")] = Map.prototype._getAttrs;
-Map.prototype[setValueSymbol] = Map.prototype._setAttrs;
-Map.prototype[canSymbol.for("can.deleteKeyValue")] = Map.prototype._remove;
-Map.prototype[canSymbol.for("can.keyHasDependencies")] = function(key) {
-	return !!(this._computedAttrs && this._computedAttrs[key] &&
-		this._computedAttrs[key].compute);
-};
-Map.prototype[canSymbol.for("can.getKeyDependencies")] = function(key) {
-	var ret;
-	if(this._computedAttrs && this._computedAttrs[key] && this._computedAttrs[key].compute) {
-		ret = {};
-		ret.valueDependencies = new CIDSet();
-		ret.valueDependencies.add(this._computedAttrs[key].compute);
+	// -shape
+	"can.getOwnEnumerableKeys": function(){
+		Observation.add(this, '__keys');
+		return Object.keys(this._data);
+	},
+
+	// -shape get/set-
+	"can.assignDeep": function(source){
+		canBatch.start();
+		// TODO: we should probably just throw an error instead of cleaning
+		canReflect.assignDeepMap(this, mapHelpers.removeSpecialKeys(canReflect.assignMap({}, source)));
+		canBatch.stop();
+	},
+	"can.updateDeep": function(source){
+		canBatch.start();
+		// TODO: we should probably just throw an error instead of cleaning
+		canReflect.updateDeepMap(this, mapHelpers.removeSpecialKeys(canReflect.assignMap({}, source)));
+		canBatch.stop();
+	},
+	"can.unwrap": mapHelpers.reflectUnwrap,
+	"can.serialize": mapHelpers.reflectSerialize,
+
+	// observable
+	"can.onKeyValue": function(key, handler){
+		var translationHandler = function(ev, newValue, oldValue){
+			handler.call(this, newValue, oldValue);
+		};
+		singleReference.set(handler, this, translationHandler, key);
+
+		this.addEventListener(key, translationHandler);
+	},
+	"can.offKeyValue": function(key, handler){
+		this.removeEventListener(key, singleReference.getAndDelete(handler, this, key) );
+	},
+	"can.keyHasDependencies": function(key) {
+		return !!(this._computedAttrs && this._computedAttrs[key] &&
+			this._computedAttrs[key].compute);
+	},
+	"can.getKeyDependencies": function(key) {
+		var ret;
+		if(this._computedAttrs && this._computedAttrs[key] && this._computedAttrs[key].compute) {
+			ret = {};
+			ret.valueDependencies = new CIDSet();
+			ret.valueDependencies.add(this._computedAttrs[key].compute);
+		}
+		return ret;
 	}
-	return ret;
-};
-Map.prototype[canSymbol.for("can.getOwnEnumerableKeys")] = function() {
-	return Object.keys(this._data);
-};
+});
+
 
 if(!types.DefaultMap) {
 	types.DefaultMap = Map;

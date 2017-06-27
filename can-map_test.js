@@ -416,7 +416,7 @@ QUnit.test("can-reflect setKeyValue", function(){
 	QUnit.equal(a.attr("a"), "c", "setKeyValue");
 });
 
-QUnit.test("can-reflect getKeyDependencies", function() { 
+QUnit.test("can-reflect getKeyDependencies", function() {
 	var a = new Map({ "a": "a" });
 	var b = new (Map.extend({
 		"a": canCompute(function(){
@@ -436,7 +436,7 @@ QUnit.test("can-reflect getKeyDependencies", function() {
 
 });
 
-QUnit.test("registered symbols", function() { 
+QUnit.test("registered symbols", function() {
 	var a = new Map({ "a": "a" });
 
 	ok(a[canSymbol.for("can.isMapLike")], "can.isMapLike");

@@ -8,7 +8,6 @@ var isPromise = require('can-util/js/is-promise/is-promise');
 var CID = require('can-cid');
 var assign = require('can-util/js/assign/assign');
 var canReflect = require('can-reflect');
-var canSymbol = require('can-symbol');
 // ## POJOs to Map instance helpers
 
 // ### madeMap
@@ -45,7 +44,35 @@ var mapHelpers = {
 	canMakeObserve: function (obj) {
 		return obj && !isPromise(obj) && (isArray(obj) || isPlainObject(obj) );
 	},
-
+	reflectSerialize: function(unwrapped){
+		this.each(function(val, name){
+			if( this.___serialize ) {
+				val = this.___serialize(name, val);
+			} else {
+				val = canReflect.serialize(val);
+			}
+			if(val !== undefined) {
+				unwrapped[name] = val;
+			}
+		}, this);
+		return unwrapped;
+	},
+	reflectUnwrap: function(unwrapped){
+		this.each(function(value, key){
+			if(value !== undefined) {
+				unwrapped[key] = canReflect.unwrap(value);
+			}
+		});
+		return unwrapped;
+	},
+	removeSpecialKeys: function(map) {
+		if(map) {
+			["_data", "constructor", "_cid", "__bindEvents"].forEach(function(key) {
+				delete map[key];
+			});
+		}
+		return map;
+	},
 	// ### mapHelpers.serialize
 	// Serializes a Map or Map.List by recursively calling the `how`
 	// method on any child objects. This is able to handle
@@ -53,7 +80,7 @@ var mapHelpers = {
 	// `map` - the map or list to serialize.
 	// `how` - the method to call recursively.
 	// `where` - the target Object or Array that becomes the serialized result.
-	serialize: (function(){
+	/*serialize: (function(){
 
 		// A temporary mapping of map cids to the serialized result.
 		var serializeMap = null;
@@ -104,12 +131,12 @@ var mapHelpers = {
 			}
 			return where;
 		};
-	})(),
+	})(),*/
 
 	// ## getValue
 	// If `val` is an observable, calls `how` on it; otherwise
 	// returns the value of `val`.
-	getValue: function(map, name, val, how){
+	/*getValue: function(map, name, val, how){
 		if(how === "attr") {
 			how = canSymbol.for("can.getValue");
 		}
@@ -118,7 +145,7 @@ var mapHelpers = {
 		} else {
 			return val;
 		}
-	},
+	},*/
 
 	// ## define
 	// A hook to call whenever a Map is defined.
