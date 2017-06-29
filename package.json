@@ -1,6 +1,6 @@
 {
   "name": "can-map",
-  "version": "3.3.0-pre.0",
+  "version": "3.3.0-pre.1",
   "description": "Observable Objects",
   "homepage": "http://canjs.com",
   "author": {
@@ -36,21 +36,18 @@
   },
   "dependencies": {
     "can-cid": "^1.0.0",
-    "can-compute": "^3.1.0-pre.14",
+    "can-compute": "^3.3.0-pre.1",
     "can-construct": "^3.2.0-pre.0",
     "can-event": "^3.5.0-pre.2",
     "can-namespace": "^1.0.0",
-    "can-observation": "^3.2.0-pre.16",
-    "can-reflect": "^1.1.0-pre.0",
+    "can-observation": "^3.3.0-pre.1",
+    "can-reflect": "^1.1.0-pre.2",
     "can-symbol": "^1.0.0-pre.0",
     "can-types": "^1.1.0-pre.1",
-    "can-util": "^3.9.0-pre.4"
+    "can-util": "^3.9.0-pre.4",
+	"can-stache-key": "^0.0.2"
   },
   "devDependencies": {
-    "bit-docs": "0.0.7",
-    "done-serve": "^0.2.0",
-    "donejs-cli": "^0.9.5",
-    "generator-donejs": "^0.9.0",
     "jshint": "^2.9.1",
     "steal": "^1.2.9",
     "steal-qunit": "^1.0.1",

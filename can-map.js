@@ -21,7 +21,7 @@ var canBatch = require('can-event/batch/batch');
 var eventLifecycle = require('can-event/lifecycle/lifecycle');
 var Construct = require('can-construct');
 var Observation = require('can-observation');
-var ObserveReader = require('can-observation/reader/reader');
+var ObserveReader = require('can-stache-key');
 var canCompute = require('can-compute');
 var singleReference = require('can-util/js/single-reference/single-reference');
 
