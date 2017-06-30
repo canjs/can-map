@@ -4,7 +4,7 @@ var Map = require('can-map');
 var QUnit = require('steal-qunit');
 var Observation = require('can-observation');
 var Construct = require('can-construct');
-var observeReader = require('can-observation/reader/reader');
+var observeReader = require('can-stache-key');
 var canReflect = require('can-reflect');
 var canSymbol = require('can-symbol');
 var canCompute = require('can-compute');
@@ -416,7 +416,7 @@ QUnit.test("can-reflect setKeyValue", function(){
 	QUnit.equal(a.attr("a"), "c", "setKeyValue");
 });
 
-QUnit.test("can-reflect getKeyDependencies", function() { 
+QUnit.test("can-reflect getKeyDependencies", function() {
 	var a = new Map({ "a": "a" });
 	var b = new (Map.extend({
 		"a": canCompute(function(){
@@ -436,7 +436,7 @@ QUnit.test("can-reflect getKeyDependencies", function() {
 
 });
 
-QUnit.test("registered symbols", function() { 
+QUnit.test("registered symbols", function() {
 	var a = new Map({ "a": "a" });
 
 	ok(a[canSymbol.for("can.isMapLike")], "can.isMapLike");
