@@ -3,7 +3,6 @@
 // a map, or track the maps created from plain JavaScript objects.
 // `can.Map` handles cycles in objects nicely!
 var isPlainObject = require('can-util/js/is-plain-object/is-plain-object');
-var isArray = require('can-util/js/is-array/is-array');
 var isPromise = require('can-util/js/is-promise/is-promise');
 var CID = require('can-cid');
 var assign = require('can-util/js/assign/assign');
@@ -42,7 +41,7 @@ var mapHelpers = {
 	// ### can.mapHelpers.canMakeObserve
 	// Determines if an object can be made into an observable.
 	canMakeObserve: function (obj) {
-		return obj && !isPromise(obj) && (isArray(obj) || isPlainObject(obj) );
+		return obj && !isPromise(obj) && (Array.isArray(obj) || isPlainObject(obj) );
 	},
 	reflectSerialize: function(unwrapped){
 		this.each(function(val, name){
