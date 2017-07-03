@@ -21,8 +21,9 @@ var canBatch = require('can-event/batch/batch');
 var eventLifecycle = require('can-event/lifecycle/lifecycle');
 var Construct = require('can-construct');
 var Observation = require('can-observation');
-var ObserveReader = require('can-observation/reader/reader');
+var ObserveReader = require('can-stache-key');
 var canCompute = require('can-compute');
+var singleReference = require('can-util/js/single-reference/single-reference');
 
 var namespace = require("can-namespace");
 var dev = require("can-util/js/dev/dev");
@@ -31,12 +32,17 @@ var deepAssign = require("can-util/js/deep-assign/deep-assign");
 var isFunction = require("can-util/js/is-function/is-function");
 var assign = require("can-util/js/assign/assign");
 var types = require("can-types");
-var isArray = require("can-util/js/is-array/is-array");
+var canReflect = require("can-reflect");
+var canSymbol = require("can-symbol");
+var CIDSet = require('can-util/js/cid-set/cid-set');
+var CIDMap = require("can-util/js/cid-map/cid-map");
 
 // properties that can't be observed on ... no matter what
 var unobservable = {
 	"constructor": true
 };
+
+var hasOwnProperty = ({}).hasOwnProperty;
 
 // Extend [can.Construct](../construct/construct.html) to make inheriting a `can.Map` easier.
 var Map = Construct.extend(
@@ -128,18 +134,14 @@ var Map = Construct.extend(
 		// ### bind,  unbind
 		// Listen to events on the Map constructor.  These
 		// are here mostly for can.Model.
-        addEventListener: eventLifecycle.addAndSetup,
-    	removeEventListener: eventLifecycle.removeAndTeardown,
+		addEventListener: eventLifecycle.addAndSetup,
+		removeEventListener: eventLifecycle.removeAndTeardown,
 
 		// ### keys
 		// An observable way to get the keys from a map.
 		keys: function (map) {
-			var keys = [];
 			Observation.add(map, '__keys');
-			for (var keyName in map._data) {
-				keys.push(keyName);
-			}
-			return keys;
+			return canReflect.getOwnEnumerableKeys(map._data);
 		}
 	},
 	/**
@@ -151,18 +153,17 @@ var Map = Construct.extend(
 		// Initializes the map instance's behavior.
 		setup: function (obj) {
 
-			if(obj instanceof Map){
+			if(canReflect.isObservableLike(obj) && typeof obj.serialize === "function"){
 				obj = obj.serialize();
 			}
 
 			// Where we keep the values of the compute.
-			this._data = {};
+			this._data = Object.create(null);
 
 			// The namespace this `object` uses to listen to events.
 			CID(this, ".map");
 
 			this._setupComputedProperties();
-
 			var teardownMapping = obj && mapHelpers.addToMap(obj, this);
 
 			var defaultValues = this._setupDefaults(obj);
@@ -191,7 +192,7 @@ var Map = Construct.extend(
 		// }
 		// ```
 		_setupComputedProperties: function () {
-			this._computedAttrs = {};
+			this._computedAttrs = Object.create(null);
 
 			var computes = this.constructor._computedPropertyNames;
 
@@ -253,7 +254,7 @@ var Map = Construct.extend(
 
 				var current = this.__get( first );
 
-				return current && current._get ?  current._get(second) : undefined;
+				return current && canReflect.getKeyValue(current, second);
 			} else {
 				return this.__get( attr );
 			}
@@ -280,7 +281,7 @@ var Map = Construct.extend(
 					// return computedAttr.compute();
 					return computedAttr.compute();
 				} else {
-					return this._data.hasOwnProperty(attr) ? this._data[attr] : undefined;
+					return hasOwnProperty.call(this._data, attr) ? this._data[attr] : undefined;
 				}
 			} else {
 				return this._data;
@@ -308,10 +309,17 @@ var Map = Construct.extend(
 
 				current =  this.__inSetup ? undefined : this.___get( first );
 
-				if( types.isMapLike(current) ) {
-					current._set(second, value);
+				if( canReflect.isMapLike(current) ) {
+					canReflect.setKeyValue(current, second, value);
 				} else {
-					throw new Error("can-map: Object does not exist");
+					current = this.__inSetup ? undefined : this.___get( attr );
+
+					// //Convert if there is a converter.  Remove in 3.0.
+					if (this.__convert) {
+						value = this.__convert(attr, value);
+					}
+
+					this.__set(attr, this.__type(value, attr), current);
 				}
 
 			} else {
@@ -335,7 +343,11 @@ var Map = Construct.extend(
 		// list or map instance is used.
 		__type: function(value, prop){
 
-			if (typeof value === "object" && !types.isMapLike( value ) && mapHelpers.canMakeObserve(value) && !isArray(value) ) {
+			if (typeof value === "object" &&
+				!canReflect.isObservableLike( value ) &&
+				mapHelpers.canMakeObserve(value) &&
+				!canReflect.isListLike(value)
+			) {
 
 				var cached = mapHelpers.getMapFromObject(value);
 				if(cached) {
@@ -358,8 +370,8 @@ var Map = Construct.extend(
 				var computedAttr = this._computedAttrs[prop];
 
 				// Dispatch an "add" event if adding a new property.
-				var changeType = computedAttr || current !== undefined || this.___get()
-					.hasOwnProperty(prop) ? "set" : "add";
+				var changeType = computedAttr || current !== undefined ||
+					hasOwnProperty.call(this.___get(), prop) ? "set" : "add";
 
 				// Set the value on `_data` and set up bubbling.
 				this.___set(prop, typeof value === "object" ? bubble.set(this, prop, value, current) : value );
@@ -413,7 +425,7 @@ var Map = Construct.extend(
 
 			// If we have more parts, call `removeAttr` on that part.
 			if (parts.length && current) {
-				return current.removeAttr(parts);
+				return canReflect.deleteKeyValue(current, parts.join("."));
 			} else {
 
 				// If attr does not have a `.`
@@ -449,13 +461,13 @@ var Map = Construct.extend(
 		// Serializes a property.  Uses map helpers to
 		// recursively serialize nested observables.
 		___serialize: function(name, val){
-			return mapHelpers.getValue(this, name, val, "serialize");
+			return canReflect.serialize(val, CIDMap);
 		},
 
 		// ### _getAttrs
 		// Returns the values of all attributes as a plain JavaScript object.
 		_getAttrs: function(){
-			return mapHelpers.serialize(this, 'attr', {});
+			return canReflect.unwrap(this, CIDMap);
 		},
 		// ### _setAttrs
 		// Sets multiple properties on this object at once.
@@ -463,58 +475,16 @@ var Map = Construct.extend(
 		// or removes old properties.
 		// Then it goes through the remaining ones to be added and sets those properties.
 		_setAttrs: function (props, remove) {
-			props = assign({}, props);
-			var prop,
-				self = this,
-				newVal;
-
-			// Batch all of the change events until we are done.
-			canBatch.start();
-			// Merge current properties with the new ones.
-			this._each(function (curVal, prop) {
-				// You can not have a _cid property; abort.
-				if (prop === "_cid") {
-					return;
-				}
-				newVal = props[prop];
-
-				// If we are merging, remove the property if it has no value.
-				if (newVal === undefined) {
-					if (remove) {
-						self.removeAttr(prop);
-					}
-					return;
-				}
-
-				// Run converter if there is one. Remove in 3.0.
-				if (self.__convert) {
-					newVal = self.__convert( prop, newVal );
-				}
-
-				if ( types.isMapLike(curVal) && mapHelpers.canMakeObserve(newVal) ) {
-					curVal.attr(newVal, remove);
-					// Otherwise just set.
-				} else if (curVal !== newVal) {
-					self.__set(prop, self.__type(newVal, prop), curVal);
-				}
-
-				delete props[prop];
-			});
-			// Add remaining props.
-			for (prop in props) {
-				// Ignore _cid.
-				if (prop !== "_cid") {
-					newVal = props[prop];
-					this._set(prop, newVal, true);
-				}
-
+			if(remove === true) {
+				this[canSymbol.for("can.updateDeep")](props);
+			} else {
+				this[canSymbol.for("can.assignDeep")](props);
 			}
-			canBatch.stop();
 			return this;
 		},
 
 		serialize: function () {
-			return mapHelpers.serialize(this, 'serialize', {});
+			return canReflect.serialize(this, CIDMap);
 		},
 
 
@@ -569,7 +539,9 @@ var Map = Construct.extend(
 			if (computedBinding && computedBinding.compute) {
 				if (!computedBinding.count) {
 					computedBinding.count = 1;
-					computedBinding.compute.addEventListener("change", computedBinding.handler);
+					computedBinding.compute.addEventListener("change", function(ev, newVal, oldVal) {
+						computedBinding.handler(newVal, oldVal);
+					});
 				} else {
 					computedBinding.count++;
 				}
@@ -591,7 +563,7 @@ var Map = Construct.extend(
 			if (computedBinding) {
 				if (computedBinding.count === 1) {
 					computedBinding.count = 0;
-					computedBinding.compute.removeEventListener("change", computedBinding.handler);
+					canReflect.offValue(computedBinding.compute, computedBinding.handler);
 				} else {
 					computedBinding.count--;
 				}
@@ -617,7 +589,7 @@ var Map = Construct.extend(
 
 				return canCompute(function (newVal) {
 					if (arguments.length) {
-						ObserveReader.write(this, reads[last].key, newVal);
+						ObserveReader.write(this, reads[last].key, newVal, {});
 					} else {
 						return ObserveReader.get(this, prop);
 					}
@@ -645,7 +617,7 @@ var Map = Construct.extend(
 		_each: function (callback) {
 			var data = this.___get();
 			for (var prop in data) {
-				if (data.hasOwnProperty(prop)) {
+				if (hasOwnProperty.call(data, prop)) {
 					callback(data[prop], prop);
 				}
 			}
@@ -664,14 +636,68 @@ Map.prototype.off = Map.prototype.unbind = Map.prototype.removeEventListener;
 Map.on = Map.bind = Map.addEventListener;
 Map.off = Map.unbind = Map.removeEventListener;
 
-var oldIsMapLike = types.isMapLike;
-types.isMapLike = function(obj){
-    if(obj instanceof Map) {
-        return true;
-    } else {
-        return oldIsMapLike.call(this, obj);
-    }
-};
+// - type -
+
+canReflect.assignSymbols(Map.prototype,{
+	// -type-
+	"can.isMapLike": true,
+	"can.isListLike":  false,
+	"can.isValueLike": false,
+
+	// -get/set-
+	"can.getKeyValue": Map.prototype._get,
+	"can.setKeyValue": Map.prototype._set,
+	"can.deleteKeyValue": Map.prototype._remove,
+
+	// -shape
+	"can.getOwnEnumerableKeys": function(){
+		Observation.add(this, '__keys');
+		return Object.keys(this._data);
+	},
+
+	// -shape get/set-
+	"can.assignDeep": function(source){
+		canBatch.start();
+		// TODO: we should probably just throw an error instead of cleaning
+		canReflect.assignDeepMap(this, mapHelpers.removeSpecialKeys(canReflect.assignMap({}, source)));
+		canBatch.stop();
+	},
+	"can.updateDeep": function(source){
+		canBatch.start();
+		// TODO: we should probably just throw an error instead of cleaning
+		canReflect.updateDeepMap(this, mapHelpers.removeSpecialKeys(canReflect.assignMap({}, source)));
+		canBatch.stop();
+	},
+	"can.unwrap": mapHelpers.reflectUnwrap,
+	"can.serialize": mapHelpers.reflectSerialize,
+
+	// observable
+	"can.onKeyValue": function(key, handler){
+		var translationHandler = function(ev, newValue, oldValue){
+			handler.call(this, newValue, oldValue);
+		};
+		singleReference.set(handler, this, translationHandler, key);
+
+		this.addEventListener(key, translationHandler);
+	},
+	"can.offKeyValue": function(key, handler){
+		this.removeEventListener(key, singleReference.getAndDelete(handler, this, key) );
+	},
+	"can.keyHasDependencies": function(key) {
+		return !!(this._computedAttrs && this._computedAttrs[key] &&
+			this._computedAttrs[key].compute);
+	},
+	"can.getKeyDependencies": function(key) {
+		var ret;
+		if(this._computedAttrs && this._computedAttrs[key] && this._computedAttrs[key].compute) {
+			ret = {};
+			ret.valueDependencies = new CIDSet();
+			ret.valueDependencies.add(this._computedAttrs[key].compute);
+		}
+		return ret;
+	}
+});
+
 
 if(!types.DefaultMap) {
 	types.DefaultMap = Map;

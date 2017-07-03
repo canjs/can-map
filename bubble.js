@@ -24,7 +24,7 @@
 var canEvent = require('can-event');
 
 var makeArray = require('can-util/js/make-array/make-array');
-var types = require('can-types');
+var canReflect = require('can-reflect');
 var isEmptyObject = require('can-util/js/is-empty-object/is-empty-object');
 
 
@@ -92,7 +92,7 @@ var bubble = {
 		// `teardownFromParent` to ensure we aren't bubbling the same
 		// child more than once.
 		add: function(parent, child, prop){
-			if(types.isMapLike( child ) && parent._bubbleBindings) {
+			if(canReflect.isObservableLike(child) && canReflect.isMapLike(child) && parent._bubbleBindings) {
 				for(var eventName in parent._bubbleBindings) {
 					if( parent._bubbleBindings[eventName] ) {
 						bubble.teardownFromParent(parent, child, eventName);
@@ -112,7 +112,7 @@ var bubble = {
 		// Called when a `child` has been removed from `parent`.
 		// Removes all bubbling events from `child` to `parent`.
 		remove: function(parent, child){
-			if(types.isMapLike( child ) && parent._bubbleBindings) {
+			if(canReflect.isObservableLike(child) && canReflect.isMapLike(child) && parent._bubbleBindings) {
 				for(var eventName in parent._bubbleBindings) {
 					if( parent._bubbleBindings[eventName] ) {
 						bubble.teardownFromParent(parent, child, eventName);
@@ -131,11 +131,11 @@ var bubble = {
 		// Called when a new child `value` replaces `current` value.
 		set: function(parent, prop, value, current){
 
-			if( types.isMapLike(value) ) {
+			if(canReflect.isObservableLike(value) && canReflect.isMapLike(value)) {
 				bubble.add(parent, value, prop);
 			}
 			// bubble.add will remove, so only remove if we are replacing another object
-			if( types.isMapLike(current) ) {
+			if(canReflect.isObservableLike(current) && canReflect.isMapLike(current)) {
 				bubble.remove(parent, current);
 			}
 			return value;
@@ -162,7 +162,7 @@ var bubble = {
 				// If the parent is a list, the index of the child needs to
 				// be calculated every time.
 				args[0] =
-					(types.isListLike( parent ) ?
+					((canReflect.isObservableLike(parent) && canReflect.isListLike(parent)) ?
 						parent.indexOf(child) :
 						prop ) + (args[0] ? "."+args[0] : "");
 

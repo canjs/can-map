@@ -3,11 +3,10 @@
 // a map, or track the maps created from plain JavaScript objects.
 // `can.Map` handles cycles in objects nicely!
 var isPlainObject = require('can-util/js/is-plain-object/is-plain-object');
-var isArray = require('can-util/js/is-array/is-array');
 var isPromise = require('can-util/js/is-promise/is-promise');
 var CID = require('can-cid');
-var types = require('can-types');
 var assign = require('can-util/js/assign/assign');
+var canReflect = require('can-reflect');
 // ## POJOs to Map instance helpers
 
 // ### madeMap
@@ -42,9 +41,37 @@ var mapHelpers = {
 	// ### can.mapHelpers.canMakeObserve
 	// Determines if an object can be made into an observable.
 	canMakeObserve: function (obj) {
-		return obj && !isPromise(obj) && (isArray(obj) || isPlainObject(obj) );
+		return obj && !isPromise(obj) && (Array.isArray(obj) || isPlainObject(obj) );
 	},
-
+	reflectSerialize: function(unwrapped){
+		this.each(function(val, name){
+			if( this.___serialize ) {
+				val = this.___serialize(name, val);
+			} else {
+				val = canReflect.serialize(val);
+			}
+			if(val !== undefined) {
+				unwrapped[name] = val;
+			}
+		}, this);
+		return unwrapped;
+	},
+	reflectUnwrap: function(unwrapped){
+		this.each(function(value, key){
+			if(value !== undefined) {
+				unwrapped[key] = canReflect.unwrap(value);
+			}
+		});
+		return unwrapped;
+	},
+	removeSpecialKeys: function(map) {
+		if(map) {
+			["_data", "constructor", "_cid", "__bindEvents"].forEach(function(key) {
+				delete map[key];
+			});
+		}
+		return map;
+	},
 	// ### mapHelpers.serialize
 	// Serializes a Map or Map.List by recursively calling the `how`
 	// method on any child objects. This is able to handle
@@ -52,7 +79,7 @@ var mapHelpers = {
 	// `map` - the map or list to serialize.
 	// `how` - the method to call recursively.
 	// `where` - the target Object or Array that becomes the serialized result.
-	serialize: (function(){
+	/*serialize: (function(){
 
 		// A temporary mapping of map cids to the serialized result.
 		var serializeMap = null;
@@ -79,7 +106,7 @@ var mapHelpers = {
 			map.each(function (val, name) {
 				// If the value is an `object`, and has an `attr` or `serialize` function.
 				var result,
-					isObservable =  types.isMapLike(val),
+					isObservable = canReflect.isObservableLike(val),
 					serialized = isObservable && serializeMap[how][CID(val)];
 
 				if( serialized ) {
@@ -103,18 +130,21 @@ var mapHelpers = {
 			}
 			return where;
 		};
-	})(),
+	})(),*/
 
 	// ## getValue
 	// If `val` is an observable, calls `how` on it; otherwise
 	// returns the value of `val`.
-	getValue: function(map, name, val, how){
-		if( types.isMapLike(val) ) {
+	/*getValue: function(map, name, val, how){
+		if(how === "attr") {
+			how = canSymbol.for("can.getValue");
+		}
+		if( canReflect.isObservableLike(val) && val[how] ) {
 			return val[how]();
 		} else {
 			return val;
 		}
-	},
+	},*/
 
 	// ## define
 	// A hook to call whenever a Map is defined.
@@ -133,8 +163,8 @@ var mapHelpers = {
 		map._computedAttrs[attrName] = {
 			compute: compute,
 			count: 0,
-			handler: function (ev, newVal, oldVal) {
-				map._triggerChange(attrName, "set", newVal, oldVal, ev.batchNum);
+			handler: function (newVal, oldVal) {
+				map._triggerChange(attrName, "set", newVal, oldVal);
 			}
 		};
 	},
