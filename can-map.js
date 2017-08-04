@@ -307,7 +307,7 @@ var Map = Construct.extend(
 				var first = attr.substr(0, dotIndex),
 					second = attr.substr(dotIndex+1);
 
-				current =  this.__inSetup ? undefined : this.___get( first );
+				current = this.___get( first );
 
 				if( canReflect.isMapLike(current) ) {
 					canReflect.setKeyValue(current, second, value);
