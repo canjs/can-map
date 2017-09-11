@@ -128,30 +128,44 @@ you call `attr` at:
 
 ## Properties with dots in their name
 
-As shown above, `attr` enables reading and setting deep properties so special care must be taken when property names include dots '`.`'. To read a property containing dots, escape each one using '`\`'. This prevents `attr` from performing a deep lookup and throwing an error when the deep property is not found.
+As shown above, `attr` enables reading and setting deep properties so special care must be taken when property names include dots (`.`).  When setting a property containing dots, `attr` looks for an existing container object in the path.  If found, it will repeat the process for the child Map and the rest of the path; if not, any remaining path (dots included) becomes the property key to be set on the container.
 
 ```
 var person = new Map({
-	'first.name': 'Alice'
+	'first.name': 'Alice',
+	'second': {
+		'name': 'Amy',
+		'old.name': 'Andrea'
+	}
 });
 
-person.attr('first.name'); // throws Error
-person.attr('first\.name'); // 'Alice'
+person.attr('first.name', 'Bob'); // 'Alice' -> 'Bob'
+person.attr('second.name', 'Bob'); // 'Amy' -> 'Bob'
+person.attr({'second.old.name': 'Bob'}); // 'Andrea' -> 'Bob'
+person.attr({'second.better.name': 'Bob'}); // 'better.name' is set to 'Bob' on `person.second`
+person.attr({'third.name': 'Bob'}); // 'third.name' is set to 'Bob' on `person`
 
 ```
 
-When setting a property containing dots, pass an object to `attr` containing the property name and new value. Setting a property by passing a string to `attr` will attempt to set a deep property and will throw an error.
+A property `foo` and a property `foo.bar` will be in conflict with each other; when reading `'foo.bar'` with `attr`, the full string `foo.bar` takes precedence, but when writing, `foo` takes precedence and `foo.bar` cannot be written to.  For this reason, it is inadvisable to set properties that create these conflicts.
 
 ```
 var person = new Map({
-	'first.name': 'Alice'
+	'first.name': 'Alice',
+	'first': {
+		'name': 'Amy'
+	}
 });
 
-person.attr('first.name', 'Bob'); // throws Error
-person.attr('first\.name', 'Bob'); // throws Error
-person.attr({'first.name': 'Bob'}); // Works
+person.attr('first.name'); // 'Alice'
+person.attr('first').attr('name'); // 'Amy'
+
+person.attr('first.name', 'Bob'); // 'Amy' -> 'Bob'
+person.attr('first').attr('name'); // 'Amy' -> 'Bob'
 
 ```
+
+
 
 ## See also
 
