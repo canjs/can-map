@@ -1,6 +1,7 @@
 @module {constructor} can-map
 @inherits can-construct
-@parent can-legacy
+@parent can-observables
+@collection can-legacy
 @group can-map.prototype 0 prototype
 @group can-map.static 1 static
 @test can/map/test.html
