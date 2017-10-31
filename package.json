@@ -1,6 +1,6 @@
 {
   "name": "can-map",
-  "version": "3.4.0",
+  "version": "4.0.0-pre.0",
   "description": "Observable Objects",
   "homepage": "http://canjs.com",
   "author": {
@@ -37,15 +37,15 @@
   "dependencies": {
     "can-cid": "^1.1.2",
     "can-construct": "^3.2.0",
-    "can-event": "^3.5.0",
+    "can-event": "^3.7.5",
     "can-namespace": "^1.0.0",
     "can-observation-recorder": "^0.1.0",
-    "can-reflect": "^1.2.0",
+    "can-reflect": "^1.7.2",
     "can-simple-observable": "^2.0.0-pre.16",
     "can-stache-key": "^1.0.0-pre.9",
     "can-symbol": "^1.4.1",
     "can-types": "^1.1.0",
-    "can-util": "^3.9.4"
+    "can-util": "^3.10.12"
   },
   "devDependencies": {
     "can-observation": "^4.0.0-pre.18",
