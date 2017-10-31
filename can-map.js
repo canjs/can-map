@@ -20,22 +20,23 @@ var canEvent = require('can-event');
 var canBatch = require('can-event/batch/batch');
 var eventLifecycle = require('can-event/lifecycle/lifecycle');
 var Construct = require('can-construct');
-var Observation = require('can-observation');
-var ObserveReader = require('can-stache-key');
-var canCompute = require('can-compute');
+var ObservationRecorder = require('can-observation-recorder');
+//var ObserveReader = require('can-stache-key');
+//var canCompute = require('can-compute');
 var singleReference = require('can-util/js/single-reference/single-reference');
 
 var namespace = require("can-namespace");
 var dev = require("can-util/js/dev/dev");
 var CID = require("can-cid");
 var deepAssign = require("can-util/js/deep-assign/deep-assign");
-var isFunction = require("can-util/js/is-function/is-function");
+//var isFunction = require("can-util/js/is-function/is-function");
 var assign = require("can-util/js/assign/assign");
 var types = require("can-types");
 var canReflect = require("can-reflect");
 var canSymbol = require("can-symbol");
 var CIDSet = require('can-util/js/cid-set/cid-set');
 var CIDMap = require("can-util/js/cid-map/cid-map");
+var canQueues = require("can-queues");
 
 // properties that can't be observed on ... no matter what
 var unobservable = {
@@ -91,12 +92,12 @@ var Map = Construct.extend(
 						prop !== "define" &&
 						prop !== "constructor" &&
 						(
-						typeof this.prototype[prop] !== "function" ||
+						typeof this.prototype[prop] !== "function" && !canReflect.isValueLike(this.prototype[prop]) ||
 						this.prototype[prop].prototype instanceof Construct
 						)
 					) {
 						this.defaults[prop] = this.prototype[prop];
-					} else if (this.prototype[prop].isComputed) {
+					} else if (canReflect.isObservableLike(this.prototype[prop])) {
 						this._computedPropertyNames.push(prop);
 					}
 				}
@@ -140,7 +141,7 @@ var Map = Construct.extend(
 		// ### keys
 		// An observable way to get the keys from a map.
 		keys: function (map) {
-			Observation.add(map, '__keys');
+			ObservationRecorder.add(map, '__keys');
 			return canReflect.getOwnEnumerableKeys(map._data);
 		}
 	},
@@ -198,7 +199,7 @@ var Map = Construct.extend(
 
 			for (var i = 0, len = computes.length; i < len; i++) {
 				var attrName = computes[i];
-				mapHelpers.addComputedAttr(this, attrName, this[attrName].clone(this));
+				mapHelpers.addComputedAttr(this, attrName, this[attrName]);
 			}
 		},
 
@@ -245,7 +246,7 @@ var Map = Construct.extend(
 				// somone wrote `new can.Map({"foo.bar": 1})`.
 				var value = this.___get(attr);
 				if (value !== undefined) {
-					Observation.add(this, attr);
+					ObservationRecorder.add(this, attr);
 					return value;
 				}
 
@@ -265,7 +266,7 @@ var Map = Construct.extend(
 		// property is being read.
 		__get: function(attr){
 			if(!unobservable[attr] && !this._computedAttrs[attr]) {
-				Observation.add(this, attr);
+				ObservationRecorder.add(this, attr);
 			}
 			return this.___get( attr );
 		},
@@ -277,9 +278,9 @@ var Map = Construct.extend(
 		___get: function (attr) {
 			if (attr !== undefined) {
 				var computedAttr = this._computedAttrs[attr];
-				if (computedAttr && computedAttr.compute) {
+				if (computedAttr) {
 					// return computedAttr.compute();
-					return computedAttr.compute();
+					return canReflect.getValue(computedAttr.compute);
 				} else {
 					return hasOwnProperty.call(this._data, attr) ? this._data[attr] : undefined;
 				}
@@ -396,7 +397,7 @@ var Map = Construct.extend(
 		___set: function (prop, val) {
 			var computedAttr = this._computedAttrs[prop];
 			if ( computedAttr ) {
-				computedAttr.compute(val);
+				canReflect.setKeyValue(computedAttr.compute, val);
 			} else {
 				this._data[prop] = val;
 			}
@@ -517,6 +518,8 @@ var Map = Construct.extend(
 					batchNum: batchNum
 				});
 			}
+
+			canQueues.deriveQueue.flush();
 		},
 
 		// ### _bindsetup and _bindteardown
@@ -539,9 +542,7 @@ var Map = Construct.extend(
 			if (computedBinding && computedBinding.compute) {
 				if (!computedBinding.count) {
 					computedBinding.count = 1;
-					computedBinding.compute.addEventListener("change", function(ev, newVal, oldVal) {
-						computedBinding.handler(newVal, oldVal);
-					});
+					canReflect.onValue(computedBinding.compute, computedBinding.handler);
 				} else {
 					computedBinding.count++;
 				}
@@ -580,22 +581,22 @@ var Map = Construct.extend(
 		// Creates a compute that represents a value on this map. If the property is a function
 		// on the prototype, a "function" compute wil be created.
 		// Otherwise, a compute will be created that reads the observable attributes
-		compute: function (prop) {
-			if (isFunction(this.constructor.prototype[prop])) {
-				return canCompute(this[prop], this);
-			} else {
-				var reads = ObserveReader.reads(prop);
-				var last = reads.length - 1;
+		// compute: function (prop) {
+		// 	if (isFunction(this.constructor.prototype[prop])) {
+		// 		return canCompute(this[prop], this);
+		// 	} else {
+		// 		var reads = ObserveReader.reads(prop);
+		// 		var last = reads.length - 1;
 
-				return canCompute(function (newVal) {
-					if (arguments.length) {
-						ObserveReader.write(this, reads[last].key, newVal, {});
-					} else {
-						return ObserveReader.get(this, prop);
-					}
-				}, this);
-			}
-		},
+		// 		return canCompute(function (newVal) {
+		// 			if (arguments.length) {
+		// 				ObserveReader.write(this, reads[last].key, newVal, {});
+		// 			} else {
+		// 				return ObserveReader.get(this, prop);
+		// 			}
+		// 		}, this);
+		// 	}
+		// },
 
 		// ### each
 		// loops through all the key-value pairs on this map.
@@ -651,7 +652,7 @@ canReflect.assignSymbols(Map.prototype,{
 
 	// -shape
 	"can.getOwnEnumerableKeys": function(){
-		Observation.add(this, '__keys');
+		ObservationRecorder.add(this, '__keys');
 		return Object.keys(this._data);
 	},
 
