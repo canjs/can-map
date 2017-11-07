@@ -671,16 +671,16 @@ canReflect.assignSymbols(Map.prototype,{
 	"can.serialize": mapHelpers.reflectSerialize,
 
 	// observable
-	"can.onKeyValue": function(key, handler){
+	"can.onKeyValue": function(key, handler, queue){
 		var translationHandler = function(ev, newValue, oldValue){
 			handler.call(this, newValue, oldValue);
 		};
 		singleReference.set(handler, this, translationHandler, key);
 
-		this.addEventListener(key, translationHandler);
+		this.addEventListener(key, translationHandler, queue);
 	},
-	"can.offKeyValue": function(key, handler){
-		this.removeEventListener(key, singleReference.getAndDelete(handler, this, key) );
+	"can.offKeyValue": function(key, handler, queue){
+		this.removeEventListener(key, singleReference.getAndDelete(handler, this, key), queue );
 	},
 	"can.keyHasDependencies": function(key) {
 		return !!(this._computedAttrs && this._computedAttrs[key] &&

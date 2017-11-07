@@ -8,6 +8,7 @@ var Construct = require('can-construct');
 var observeReader = require('can-stache-key');
 var canReflect = require('can-reflect');
 var canSymbol = require('can-symbol');
+var queues = require("can-queues");
 
 QUnit.module('can-map');
 
@@ -415,6 +416,22 @@ test("works with can-reflect", 7, function(){
 	b.attr("foo", "thud");
 	c.attr("baz", "jeek");
 
+});
+
+QUnit.test("onKeyValue and queues", function(){
+	var b = new Map({ "foo": "bar" });
+	var order = [];
+	canReflect.onKeyValue(b, "foo", function(){
+		order.push("onKeyValue");
+	},"notify");
+
+	queues.batch.start();
+	queues.mutateQueue.enqueue(function(){
+		order.push("mutate");
+	});
+	b.attr("foo","baz");
+	queues.batch.stop();
+	QUnit.deepEqual(order,["onKeyValue", "mutate"]);
 });
 
 QUnit.test("can-reflect setKeyValue", function(){
