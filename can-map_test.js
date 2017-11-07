@@ -2,7 +2,7 @@
 /*jshint -W079 */
 var Map = require('can-map');
 var QUnit = require('steal-qunit');
-var Observation = require('can-observation');
+var canCompute = require('can-compute');
 var ObservationRecorder = require('can-observation-recorder');
 var Construct = require('can-construct');
 var observeReader = require('can-stache-key');
@@ -267,12 +267,13 @@ test('_bindings count maintained after calling .off() on undefined property (#14
 	});
 
 	map.on('test', function(){});
+	var handlers = map[canSymbol.for("can.meta")].handlers;
 
-	equal(map.__bindEvents._lifecycleBindings, 1, 'The number of bindings is correct');
+	equal(handlers.get([]).length, 1, 'The number of bindings is correct');
 
 	map.off('undefined_property');
 
-	equal(map.__bindEvents._lifecycleBindings, 1, 'The number of bindings is still correct');
+	equal(handlers.get([]).length, 1, 'The number of bindings is still correct');
 });
 
 test("Should be able to get and set attribute named 'watch' on Map in Firefox", function() {
@@ -379,26 +380,32 @@ test("ObserveReader - can.Construct derived classes should be considered objects
 test("works with can-reflect", 7, function(){
 	var b = new Map({ "foo": "bar" });
 	var c = new (Map.extend({
-		"baz": new Observation(function(){
+		"baz": canCompute(function(){
 			return b.attr("foo");
 		})
 	}))({ "foo": "bar", thud: "baz" });
 
 	QUnit.equal( canReflect.getKeyValue(b, "foo"), "bar", "unbound value");
 
-	var handler = function(newValue){
-		QUnit.equal(newValue, "quux", "observed new value");
+	function bazHandler(newValue){
+		QUnit.equal(newValue, "quux", "observed new value on baz");
 
 		// Turn off the "foo" handler but "thud" should still be bound.
-		canReflect.offKeyValue(c, "baz", handler);
-	};
+		canReflect.offKeyValue(c, "baz", bazHandler);
+	}
+	function thudHandler(newValue){
+		QUnit.equal(newValue, "quux", "observed new value on thud");
+
+		// Turn off the "foo" handler but "thud" should still be bound.
+		canReflect.offKeyValue(c, "thud", thudHandler);
+	}
 	QUnit.ok(!canReflect.isValueLike(c), "isValueLike is false");
 	QUnit.ok(canReflect.isMapLike(c), "isMapLike is true");
 	QUnit.ok(!canReflect.isListLike(c), "isListLike is false");
 
-	canReflect.onKeyValue(c, "baz", handler);
+	canReflect.onKeyValue(c, "baz", bazHandler);
 	// Do a second binding to check that you can unbind correctly.
-	canReflect.onKeyValue(c, "thud", handler);
+	canReflect.onKeyValue(c, "thud", thudHandler);
 
 	b.attr("foo", "quux");
 	c.attr("thud", "quux");
@@ -420,7 +427,7 @@ QUnit.test("can-reflect setKeyValue", function(){
 QUnit.test("can-reflect getKeyDependencies", function() {
 	var a = new Map({ "a": "a" });
 	var b = new (Map.extend({
-		"a": new Observation(function(){
+		"a": canCompute(function(){
 			return a.attr("a");
 		}),
 		"b": "b"

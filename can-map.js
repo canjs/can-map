@@ -16,13 +16,11 @@
 // instantition of objects.
 var bubble = require('./bubble');
 var mapHelpers = require('./map-helpers');
-var canEvent = require('can-event');
-var canBatch = require('can-event/batch/batch');
-var eventLifecycle = require('can-event/lifecycle/lifecycle');
+var canEvent = require('can-event-queue');
 var Construct = require('can-construct');
 var ObservationRecorder = require('can-observation-recorder');
-//var ObserveReader = require('can-stache-key');
-//var canCompute = require('can-compute');
+var ObserveReader = require('can-stache-key');
+var canCompute = require('can-compute');
 var singleReference = require('can-util/js/single-reference/single-reference');
 
 var namespace = require("can-namespace");
@@ -135,8 +133,8 @@ var Map = Construct.extend(
 		// ### bind,  unbind
 		// Listen to events on the Map constructor.  These
 		// are here mostly for can.Model.
-		addEventListener: eventLifecycle.addAndSetup,
-		removeEventListener: eventLifecycle.removeAndTeardown,
+		addEventListener: canEvent.addEventListener,
+		removeEventListener: canEvent.removeEventListener,
 
 		// ### keys
 		// An observable way to get the keys from a map.
@@ -495,7 +493,7 @@ var Map = Construct.extend(
 		// Otherwise, it only fires a "named" event. Triggers a
 		// "__keys" event if a property has been added or removed.
 		_triggerChange: function (attr, how, newVal, oldVal, batchNum) {
-
+			canQueues.batch.start();
 			if(bubble.isBubbling(this, "change")) {
 				canEvent.dispatch.call(this, {
 					type: "change",
@@ -519,13 +517,13 @@ var Map = Construct.extend(
 				});
 			}
 
-			canQueues.deriveQueue.flush();
+			canQueues.batch.stop();
 		},
 
 		// ### _bindsetup and _bindteardown
 		// Placeholders for bind setup and teardown.
-		_eventSetup: function(){},
-		_eventTeardown: function(){},
+		//_eventSetup: function(){},
+		//_eventTeardown: function(){},
 
 		// ### one
 		// Listens once to an event.
@@ -552,7 +550,7 @@ var Map = Construct.extend(
 			// Sets up bubbling if needed.
 			bubble.bind(this, eventName);
 
-			return eventLifecycle.addAndSetup.apply(this, arguments);
+			return canEvent.addEventListener.apply(this, arguments);
 		},
 
 		// ### unbind
@@ -573,7 +571,7 @@ var Map = Construct.extend(
 
 			// Teardown bubbling if needed.
 			bubble.unbind(this, eventName);
-			return eventLifecycle.removeAndTeardown.apply(this, arguments);
+			return canEvent.removeEventListener.apply(this, arguments);
 
 		},
 
@@ -581,36 +579,36 @@ var Map = Construct.extend(
 		// Creates a compute that represents a value on this map. If the property is a function
 		// on the prototype, a "function" compute wil be created.
 		// Otherwise, a compute will be created that reads the observable attributes
-		// compute: function (prop) {
-		// 	if (isFunction(this.constructor.prototype[prop])) {
-		// 		return canCompute(this[prop], this);
-		// 	} else {
-		// 		var reads = ObserveReader.reads(prop);
-		// 		var last = reads.length - 1;
+		compute: function (prop) {
+			if (typeof this.constructor.prototype[prop] === "function") {
+				return canCompute(this[prop], this);
+			} else {
+				var reads = ObserveReader.reads(prop);
+				var last = reads.length - 1;
 
-		// 		return canCompute(function (newVal) {
-		// 			if (arguments.length) {
-		// 				ObserveReader.write(this, reads[last].key, newVal, {});
-		// 			} else {
-		// 				return ObserveReader.get(this, prop);
-		// 			}
-		// 		}, this);
-		// 	}
-		// },
+				return canCompute(function (newVal) {
+					if (arguments.length) {
+						ObserveReader.write(this, reads[last].key, newVal, {});
+					} else {
+						return ObserveReader.get(this, prop);
+					}
+				}, this);
+			}
+		},
 
 		// ### each
 		// loops through all the key-value pairs on this map.
 		each: function (callback, context) {
 				var key, item;
-        var keys = Map.keys(this);
-        for(var i =0, len = keys.length; i < len; i++) {
-            key = keys[i];
-            item = this.attr(key);
-            if (callback.call(context || item, item, key, this) === false) {
-                break;
-            }
-        }
-        return this;
+			var keys = Map.keys(this);
+			for(var i =0, len = keys.length; i < len; i++) {
+			    key = keys[i];
+			    item = this.attr(key);
+			    if (callback.call(context || item, item, key, this) === false) {
+			        break;
+			    }
+			}
+			return this;
 		},
 
 		// ### _each
@@ -658,16 +656,16 @@ canReflect.assignSymbols(Map.prototype,{
 
 	// -shape get/set-
 	"can.assignDeep": function(source){
-		canBatch.start();
+		canQueues.batch.start();
 		// TODO: we should probably just throw an error instead of cleaning
 		canReflect.assignDeepMap(this, mapHelpers.removeSpecialKeys(canReflect.assignMap({}, source)));
-		canBatch.stop();
+		canQueues.batch.stop();
 	},
 	"can.updateDeep": function(source){
-		canBatch.start();
+		canQueues.batch.start();
 		// TODO: we should probably just throw an error instead of cleaning
 		canReflect.updateDeepMap(this, mapHelpers.removeSpecialKeys(canReflect.assignMap({}, source)));
-		canBatch.stop();
+		canQueues.batch.stop();
 	},
 	"can.unwrap": mapHelpers.reflectUnwrap,
 	"can.serialize": mapHelpers.reflectSerialize,
