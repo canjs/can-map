@@ -540,7 +540,7 @@ var Map = Construct.extend(
 			if (computedBinding && computedBinding.compute) {
 				if (!computedBinding.count) {
 					computedBinding.count = 1;
-					canReflect.onValue(computedBinding.compute, computedBinding.handler);
+					canReflect.onValue(computedBinding.compute, computedBinding.handler, "notify");
 				} else {
 					computedBinding.count++;
 				}
