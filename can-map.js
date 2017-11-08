@@ -17,6 +17,7 @@
 var bubble = require('./bubble');
 var mapHelpers = require('./map-helpers');
 var canEvent = require('can-event-queue');
+var addTypeEvents = require("can-event-queue/type-events/type-events");
 var Construct = require('can-construct');
 var ObservationRecorder = require('can-observation-recorder');
 var ObserveReader = require('can-stache-key');
@@ -63,7 +64,7 @@ var Map = Construct.extend(
 
 			// Do not run if we are defining can.Map.
 			if (Map) {
-
+				addTypeEvents(this);
 				// Provide warnings if can.Map is used incorrectly.
 				//!steal-remove-start
 				if(this.prototype.define && !mapHelpers.define) {
@@ -506,7 +507,8 @@ var Map = Construct.extend(
 			canEvent.dispatch.call(this, {
 				type: attr,
 				target: this,
-				batchNum: batchNum
+				batchNum: batchNum,
+				patches: [{type: "set", key: attr, value: newVal}]
 			}, [newVal, oldVal]);
 
 			if(how === "remove" || how === "add") {
