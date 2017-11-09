@@ -538,3 +538,12 @@ QUnit.test("can.onInstanceBoundChange basics", function(){
         [person, false ]
     ]);
 });
+
+QUnit.test("can.isBound", function(){
+	var Person = Map.extend({
+        first: "any",
+        last: "any"
+    });
+	var p = new Person();
+	QUnit.ok(! p[canSymbol.for("can.isBound")](), "not bound");
+});

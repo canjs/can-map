@@ -522,60 +522,7 @@ var Map = Construct.extend(
 			canQueues.batch.stop();
 		},
 
-		// ### _bindsetup and _bindteardown
-		// Placeholders for bind setup and teardown.
-		//_eventSetup: function(){},
-		//_eventTeardown: function(){},
 
-		// ### one
-		// Listens once to an event.
-		one: canEvent.one,
-
-		// ### bind
-		// Listens to an event on a map.
-		// If the event is a  computed property,
-		// listen to the compute and forward its events
-		// to this map.
-		addEventListener: function (eventName, handler) {
-
-			var computedBinding = this._computedAttrs && this._computedAttrs[eventName];
-			if (computedBinding && computedBinding.compute) {
-				if (!computedBinding.count) {
-					computedBinding.count = 1;
-					canReflect.onValue(computedBinding.compute, computedBinding.handler, "notify");
-				} else {
-					computedBinding.count++;
-				}
-
-			}
-
-			// Sets up bubbling if needed.
-			bubble.bind(this, eventName);
-
-			return canEvent.addEventListener.apply(this, arguments);
-		},
-
-		// ### unbind
-		// Stops listening to an event.
-		// If this is the last listener of a computed property,
-		// stop forwarding events of the computed property to this map.
-		removeEventListener: function (eventName, handler) {
-			var computedBinding = this._computedAttrs && this._computedAttrs[eventName];
-			if (computedBinding) {
-				if (computedBinding.count === 1) {
-					computedBinding.count = 0;
-					canReflect.offValue(computedBinding.compute, computedBinding.handler);
-				} else {
-					computedBinding.count--;
-				}
-
-			}
-
-			// Teardown bubbling if needed.
-			bubble.unbind(this, eventName);
-			return canEvent.removeEventListener.apply(this, arguments);
-
-		},
 
 		// ### compute
 		// Creates a compute that represents a value on this map. If the property is a function
@@ -628,7 +575,53 @@ var Map = Construct.extend(
 	});
 
 // makes it so things can read this.
+canEvent(Map.prototype);
 
+// ### bind
+// Listens to an event on a map.
+// If the event is a  computed property,
+// listen to the compute and forward its events
+// to this map.
+Map.prototype.addEventListener = function (eventName, handler) {
+
+	var computedBinding = this._computedAttrs && this._computedAttrs[eventName];
+	if (computedBinding && computedBinding.compute) {
+		if (!computedBinding.count) {
+			computedBinding.count = 1;
+			canReflect.onValue(computedBinding.compute, computedBinding.handler, "notify");
+		} else {
+			computedBinding.count++;
+		}
+
+	}
+
+	// Sets up bubbling if needed.
+	bubble.bind(this, eventName);
+
+	return canEvent.addEventListener.apply(this, arguments);
+};
+
+// ### unbind
+// Stops listening to an event.
+// If this is the last listener of a computed property,
+// stop forwarding events of the computed property to this map.
+Map.prototype.removeEventListener = function (eventName, handler) {
+	var computedBinding = this._computedAttrs && this._computedAttrs[eventName];
+	if (computedBinding) {
+		if (computedBinding.count === 1) {
+			computedBinding.count = 0;
+			canReflect.offValue(computedBinding.compute, computedBinding.handler);
+		} else {
+			computedBinding.count--;
+		}
+
+	}
+
+	// Teardown bubbling if needed.
+	bubble.unbind(this, eventName);
+	return canEvent.removeEventListener.apply(this, arguments);
+
+};
 
 // ### etc
 // Setup on/off aliases
