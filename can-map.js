@@ -72,7 +72,7 @@ var Map = Construct.extend(
 					if(definition.enumerable === false ) {
 						this.enumerable[prop] = false;
 					}
-				}
+				};
 				// Provide warnings if can.Map is used incorrectly.
 				//!steal-remove-start
 				if(this.prototype.define && !mapHelpers.define) {
