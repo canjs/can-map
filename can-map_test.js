@@ -481,63 +481,11 @@ QUnit.test("registered symbols", function() {
 	a.attr("a", "d"); // doesn't trigger handler
 });
 
-QUnit.test("can.onInstancePatches", function(){
-	var Person = Map.extend({
-        first: "any",
-        last: "any"
-    });
 
-    var calls = [];
-    function handler(obj, patches) {
-        calls.push([obj, patches]);
-    }
-
-    Person[canSymbol.for("can.onInstancePatches")](handler);
-
-    var person = new Person({first: "Justin", last: "Meyer"});
-	canReflect.setKeyValue(person,"first", "Payal");
-	canReflect.setKeyValue(person,"last", "Shah");
-	canReflect.setKeyValue(person,"middle", "p");
-    Person[canSymbol.for("can.offInstancePatches")](handler);
-	canReflect.setKeyValue(person,"first", "Ramiya");
-	canReflect.setKeyValue(person,"last", "Mayer");
-	canReflect.setKeyValue(person,"middle", "P");
-
-    QUnit.deepEqual(calls,[
-        [person,  [{type: "set",    key: "first", value: "Payal"} ] ],
-        [person, [{type: "set",    key: "last", value: "Shah"} ] ],
-        [person, [{type: "set",    key: "middle", value: "p"} ] ]
-    ]);
+require("can-reflect-tests/observables/map-like/type/type")("Map", function(){
+    return Map.extend({});
 });
 
-QUnit.test("can.onInstanceBoundChange basics", function(){
-
-    var Person = Map.extend({
-        first: "any",
-        last: "any"
-    });
-
-    var calls = [];
-    function handler(obj, patches) {
-        calls.push([obj, patches]);
-    }
-
-    Person[canSymbol.for("can.onInstanceBoundChange")](handler);
-
-    var person = new Person({first: "Justin", last: "Meyer"});
-    var bindHandler = function(){};
-    canReflect.onKeyValue(person,"first", bindHandler);
-	canReflect.offKeyValue(person,"first", bindHandler);
-
-    Person[canSymbol.for("can.offInstanceBoundChange")](handler);
-	canReflect.onKeyValue(person,"first", bindHandler);
-	canReflect.offKeyValue(person,"first", bindHandler);
-
-    QUnit.deepEqual(calls,[
-        [person,  true ],
-        [person, false ]
-    ]);
-});
 
 QUnit.test("can.isBound", function(){
 	var Person = Map.extend({

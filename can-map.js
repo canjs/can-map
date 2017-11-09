@@ -65,6 +65,14 @@ var Map = Construct.extend(
 			// Do not run if we are defining can.Map.
 			if (Map) {
 				addTypeEvents(this);
+				this[canSymbol.for("can.defineInstanceKey")] = function(prop, definition){
+					if(definition.value !== undefined) {
+						this.defaults[prop] = definition.value;
+					}
+					if(definition.enumerable === false ) {
+						this.enumerable[prop] = false;
+					}
+				}
 				// Provide warnings if can.Map is used incorrectly.
 				//!steal-remove-start
 				if(this.prototype.define && !mapHelpers.define) {
@@ -80,6 +88,9 @@ var Map = Construct.extend(
 				// Create a placeholder for default values.
 				if (!this.defaults) {
 					this.defaults = {};
+				}
+				if(!this.enumerable) {
+					this.enumerable = {};
 				}
 
 
@@ -140,8 +151,7 @@ var Map = Construct.extend(
 		// ### keys
 		// An observable way to get the keys from a map.
 		keys: function (map) {
-			ObservationRecorder.add(map, '__keys');
-			return canReflect.getOwnEnumerableKeys(map._data);
+			return canReflect.getOwnEnumerableKeys(map);
 		}
 	},
 	/**
@@ -549,7 +559,7 @@ var Map = Construct.extend(
 		// loops through all the key-value pairs on this map.
 		each: function (callback, context) {
 				var key, item;
-			var keys = Map.keys(this);
+			var keys = canReflect.getOwnEnumerableKeys(this);
 			for(var i =0, len = keys.length; i < len; i++) {
 			    key = keys[i];
 			    item = this.attr(key);
@@ -646,7 +656,14 @@ canReflect.assignSymbols(Map.prototype,{
 	// -shape
 	"can.getOwnEnumerableKeys": function(){
 		ObservationRecorder.add(this, '__keys');
-		return Object.keys(this._data);
+		var enumerable = this.constructor.enumerable;
+		if(enumerable) {
+			return Object.keys(this._data).filter(function(key){
+				return enumerable[key] !== false;
+			},this);
+		} else {
+			return Object.keys(this._data);
+		}
 	},
 
 	// -shape get/set-
