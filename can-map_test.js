@@ -316,9 +316,6 @@ test("ObserveReader - can.Construct derived classes should be considered objects
 	read = observeReader.read(obj, observeReader.reads("next_level.thing.self"), { isArgument: true });
 	ok(read.value === foostructor, "arguments shouldn't be executed");
 
-	foostructor.self = function() { return foostructor; };
-	read = observeReader.read(obj, observeReader.reads("next_level.thing.self.text"), { });
-	equal(read.value, "bar", "anonymous functions in the middle of a read should be executed if requested");
 });
 
 // TODO re-enable tests after getting can-compute up to speed or replacing with simple observables
