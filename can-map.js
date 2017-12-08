@@ -446,6 +446,9 @@ var Map = Construct.extend(
 				// Let others now this property has been removed.
 				this._triggerChange(prop, "remove", undefined, current);
 			}
+			if (prop in this._computedAttrs) {
+        canReflect.setValue(this._computedAttrs[prop].compute, undefined);
+			}
 		},
 
 		// ### ___remove
