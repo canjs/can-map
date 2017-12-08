@@ -455,3 +455,19 @@ QUnit.test("registered symbols", function() {
 	a[canSymbol.for("can.offKeyValue")]("a", handler);
 	a.attr("a", "d"); // doesn't trigger handler
 });
+
+QUnit.test('removeAttr recalculates computed attribute', function() {
+  QUnit.expect(3);
+
+  var a = new (Map.extend({
+    'test': canCompute(function(lastSetValue){
+      QUnit.ok(lastSetValue === undefined, 'compute called with undefined lastSet value');
+
+      return 'foo';
+    })
+  }))();
+  a.on('test', function() {});
+
+  equal(a.attr('test'), 'foo');
+  a.removeAttr('test'); // should remove lastSetValue & cause recompute
+});
