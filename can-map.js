@@ -557,7 +557,7 @@ var Map = Construct.extend(
 
 		// ### each
 		// loops through all the key-value pairs on this map.
-		each: function (callback, context) {
+		forEach: function (callback, context) {
 				var key, item;
 			var keys = canReflect.getOwnEnumerableKeys(this);
 			for(var i =0, len = keys.length; i < len; i++) {
