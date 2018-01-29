@@ -16,11 +16,10 @@
 // instantition of objects.
 var bubble = require('./bubble');
 var mapHelpers = require('./map-helpers');
-var canEvent = require('can-event');
-var canBatch = require('can-event/batch/batch');
-var eventLifecycle = require('can-event/lifecycle/lifecycle');
+var canEvent = require('can-event-queue/map/map');
+var addTypeEvents = require("can-event-queue/type/type");
 var Construct = require('can-construct');
-var Observation = require('can-observation');
+var ObservationRecorder = require('can-observation-recorder');
 var ObserveReader = require('can-stache-key');
 var canCompute = require('can-compute');
 var singleReference = require('can-util/js/single-reference/single-reference');
@@ -29,13 +28,14 @@ var namespace = require("can-namespace");
 var dev = require("can-util/js/dev/dev");
 var CID = require("can-cid");
 var deepAssign = require("can-util/js/deep-assign/deep-assign");
-var isFunction = require("can-util/js/is-function/is-function");
+//var isFunction = require("can-util/js/is-function/is-function");
 var assign = require("can-util/js/assign/assign");
 var types = require("can-types");
 var canReflect = require("can-reflect");
 var canSymbol = require("can-symbol");
 var CIDSet = require('can-util/js/cid-set/cid-set');
 var CIDMap = require("can-util/js/cid-map/cid-map");
+var canQueues = require("can-queues");
 
 // properties that can't be observed on ... no matter what
 var unobservable = {
@@ -64,7 +64,15 @@ var Map = Construct.extend(
 
 			// Do not run if we are defining can.Map.
 			if (Map) {
-
+				addTypeEvents(this);
+				this[canSymbol.for("can.defineInstanceKey")] = function(prop, definition){
+					if(definition.value !== undefined) {
+						this.defaults[prop] = definition.value;
+					}
+					if(definition.enumerable === false ) {
+						this.enumerable[prop] = false;
+					}
+				};
 				// Provide warnings if can.Map is used incorrectly.
 				//!steal-remove-start
 				if(this.prototype.define && !mapHelpers.define) {
@@ -81,6 +89,9 @@ var Map = Construct.extend(
 				if (!this.defaults) {
 					this.defaults = {};
 				}
+				if(!this.enumerable) {
+					this.enumerable = {};
+				}
 
 
 				// Go through everything on the prototype.  If it's a primitive,
@@ -91,12 +102,12 @@ var Map = Construct.extend(
 						prop !== "define" &&
 						prop !== "constructor" &&
 						(
-						typeof this.prototype[prop] !== "function" ||
+						typeof this.prototype[prop] !== "function" && !canReflect.isValueLike(this.prototype[prop]) ||
 						this.prototype[prop].prototype instanceof Construct
 						)
 					) {
 						this.defaults[prop] = this.prototype[prop];
-					} else if (this.prototype[prop].isComputed) {
+					} else if (canReflect.isObservableLike(this.prototype[prop])) {
 						this._computedPropertyNames.push(prop);
 					}
 				}
@@ -134,14 +145,13 @@ var Map = Construct.extend(
 		// ### bind,  unbind
 		// Listen to events on the Map constructor.  These
 		// are here mostly for can.Model.
-		addEventListener: eventLifecycle.addAndSetup,
-		removeEventListener: eventLifecycle.removeAndTeardown,
+		addEventListener: canEvent.addEventListener,
+		removeEventListener: canEvent.removeEventListener,
 
 		// ### keys
 		// An observable way to get the keys from a map.
 		keys: function (map) {
-			Observation.add(map, '__keys');
-			return canReflect.getOwnEnumerableKeys(map._data);
+			return canReflect.getOwnEnumerableKeys(map);
 		}
 	},
 	/**
@@ -198,7 +208,7 @@ var Map = Construct.extend(
 
 			for (var i = 0, len = computes.length; i < len; i++) {
 				var attrName = computes[i];
-				mapHelpers.addComputedAttr(this, attrName, this[attrName].clone(this));
+				mapHelpers.addComputedAttr(this, attrName, this[attrName]);
 			}
 		},
 
@@ -245,7 +255,7 @@ var Map = Construct.extend(
 				// somone wrote `new can.Map({"foo.bar": 1})`.
 				var value = this.___get(attr);
 				if (value !== undefined) {
-					Observation.add(this, attr);
+					ObservationRecorder.add(this, attr);
 					return value;
 				}
 
@@ -265,7 +275,7 @@ var Map = Construct.extend(
 		// property is being read.
 		__get: function(attr){
 			if(!unobservable[attr] && !this._computedAttrs[attr]) {
-				Observation.add(this, attr);
+				ObservationRecorder.add(this, attr);
 			}
 			return this.___get( attr );
 		},
@@ -277,9 +287,9 @@ var Map = Construct.extend(
 		___get: function (attr) {
 			if (attr !== undefined) {
 				var computedAttr = this._computedAttrs[attr];
-				if (computedAttr && computedAttr.compute) {
+				if (computedAttr) {
 					// return computedAttr.compute();
-					return computedAttr.compute();
+					return canReflect.getValue(computedAttr.compute);
 				} else {
 					return hasOwnProperty.call(this._data, attr) ? this._data[attr] : undefined;
 				}
@@ -396,7 +406,7 @@ var Map = Construct.extend(
 		___set: function (prop, val) {
 			var computedAttr = this._computedAttrs[prop];
 			if ( computedAttr ) {
-				computedAttr.compute(val);
+				canReflect.setKeyValue(computedAttr.compute, val);
 			} else {
 				this._data[prop] = val;
 			}
@@ -494,7 +504,7 @@ var Map = Construct.extend(
 		// Otherwise, it only fires a "named" event. Triggers a
 		// "__keys" event if a property has been added or removed.
 		_triggerChange: function (attr, how, newVal, oldVal, batchNum) {
-
+			canQueues.batch.start();
 			if(bubble.isBubbling(this, "change")) {
 				canEvent.dispatch.call(this, {
 					type: "change",
@@ -507,7 +517,8 @@ var Map = Construct.extend(
 			canEvent.dispatch.call(this, {
 				type: attr,
 				target: this,
-				batchNum: batchNum
+				batchNum: batchNum,
+				patches: [{type: "set", key: attr, value: newVal}]
 			}, [newVal, oldVal]);
 
 			if(how === "remove" || how === "add") {
@@ -517,71 +528,18 @@ var Map = Construct.extend(
 					batchNum: batchNum
 				});
 			}
+
+			canQueues.batch.stop();
 		},
 
-		// ### _bindsetup and _bindteardown
-		// Placeholders for bind setup and teardown.
-		_eventSetup: function(){},
-		_eventTeardown: function(){},
 
-		// ### one
-		// Listens once to an event.
-		one: canEvent.one,
-
-		// ### bind
-		// Listens to an event on a map.
-		// If the event is a  computed property,
-		// listen to the compute and forward its events
-		// to this map.
-		addEventListener: function (eventName, handler) {
-
-			var computedBinding = this._computedAttrs && this._computedAttrs[eventName];
-			if (computedBinding && computedBinding.compute) {
-				if (!computedBinding.count) {
-					computedBinding.count = 1;
-					computedBinding.compute.addEventListener("change", function(ev, newVal, oldVal) {
-						computedBinding.handler(newVal, oldVal);
-					});
-				} else {
-					computedBinding.count++;
-				}
-
-			}
-
-			// Sets up bubbling if needed.
-			bubble.bind(this, eventName);
-
-			return eventLifecycle.addAndSetup.apply(this, arguments);
-		},
-
-		// ### unbind
-		// Stops listening to an event.
-		// If this is the last listener of a computed property,
-		// stop forwarding events of the computed property to this map.
-		removeEventListener: function (eventName, handler) {
-			var computedBinding = this._computedAttrs && this._computedAttrs[eventName];
-			if (computedBinding) {
-				if (computedBinding.count === 1) {
-					computedBinding.count = 0;
-					canReflect.offValue(computedBinding.compute, computedBinding.handler);
-				} else {
-					computedBinding.count--;
-				}
-
-			}
-
-			// Teardown bubbling if needed.
-			bubble.unbind(this, eventName);
-			return eventLifecycle.removeAndTeardown.apply(this, arguments);
-
-		},
 
 		// ### compute
 		// Creates a compute that represents a value on this map. If the property is a function
 		// on the prototype, a "function" compute wil be created.
 		// Otherwise, a compute will be created that reads the observable attributes
 		compute: function (prop) {
-			if (isFunction(this.constructor.prototype[prop])) {
+			if (typeof this.constructor.prototype[prop] === "function") {
 				return canCompute(this[prop], this);
 			} else {
 				var reads = ObserveReader.reads(prop);
@@ -599,17 +557,17 @@ var Map = Construct.extend(
 
 		// ### each
 		// loops through all the key-value pairs on this map.
-		each: function (callback, context) {
+		forEach: function (callback, context) {
 				var key, item;
-        var keys = Map.keys(this);
-        for(var i =0, len = keys.length; i < len; i++) {
-            key = keys[i];
-            item = this.attr(key);
-            if (callback.call(context || item, item, key, this) === false) {
-                break;
-            }
-        }
-        return this;
+			var keys = canReflect.getOwnEnumerableKeys(this);
+			for(var i =0, len = keys.length; i < len; i++) {
+			    key = keys[i];
+			    item = this.attr(key);
+			    if (callback.call(context || item, item, key, this) === false) {
+			        break;
+			    }
+			}
+			return this;
 		},
 
 		// ### _each
@@ -627,7 +585,53 @@ var Map = Construct.extend(
 	});
 
 // makes it so things can read this.
+canEvent(Map.prototype);
 
+// ### bind
+// Listens to an event on a map.
+// If the event is a  computed property,
+// listen to the compute and forward its events
+// to this map.
+Map.prototype.addEventListener = function (eventName, handler) {
+
+	var computedBinding = this._computedAttrs && this._computedAttrs[eventName];
+	if (computedBinding && computedBinding.compute) {
+		if (!computedBinding.count) {
+			computedBinding.count = 1;
+			canReflect.onValue(computedBinding.compute, computedBinding.handler, "notify");
+		} else {
+			computedBinding.count++;
+		}
+
+	}
+
+	// Sets up bubbling if needed.
+	bubble.bind(this, eventName);
+
+	return canEvent.addEventListener.apply(this, arguments);
+};
+
+// ### unbind
+// Stops listening to an event.
+// If this is the last listener of a computed property,
+// stop forwarding events of the computed property to this map.
+Map.prototype.removeEventListener = function (eventName, handler) {
+	var computedBinding = this._computedAttrs && this._computedAttrs[eventName];
+	if (computedBinding) {
+		if (computedBinding.count === 1) {
+			computedBinding.count = 0;
+			canReflect.offValue(computedBinding.compute, computedBinding.handler);
+		} else {
+			computedBinding.count--;
+		}
+
+	}
+
+	// Teardown bubbling if needed.
+	bubble.unbind(this, eventName);
+	return canEvent.removeEventListener.apply(this, arguments);
+
+};
 
 // ### etc
 // Setup on/off aliases
@@ -651,37 +655,44 @@ canReflect.assignSymbols(Map.prototype,{
 
 	// -shape
 	"can.getOwnEnumerableKeys": function(){
-		Observation.add(this, '__keys');
-		return Object.keys(this._data);
+		ObservationRecorder.add(this, '__keys');
+		var enumerable = this.constructor.enumerable;
+		if(enumerable) {
+			return Object.keys(this._data).filter(function(key){
+				return enumerable[key] !== false;
+			},this);
+		} else {
+			return Object.keys(this._data);
+		}
 	},
 
 	// -shape get/set-
 	"can.assignDeep": function(source){
-		canBatch.start();
+		canQueues.batch.start();
 		// TODO: we should probably just throw an error instead of cleaning
 		canReflect.assignDeepMap(this, mapHelpers.removeSpecialKeys(canReflect.assignMap({}, source)));
-		canBatch.stop();
+		canQueues.batch.stop();
 	},
 	"can.updateDeep": function(source){
-		canBatch.start();
+		canQueues.batch.start();
 		// TODO: we should probably just throw an error instead of cleaning
 		canReflect.updateDeepMap(this, mapHelpers.removeSpecialKeys(canReflect.assignMap({}, source)));
-		canBatch.stop();
+		canQueues.batch.stop();
 	},
 	"can.unwrap": mapHelpers.reflectUnwrap,
 	"can.serialize": mapHelpers.reflectSerialize,
 
 	// observable
-	"can.onKeyValue": function(key, handler){
+	"can.onKeyValue": function(key, handler, queue){
 		var translationHandler = function(ev, newValue, oldValue){
 			handler.call(this, newValue, oldValue);
 		};
 		singleReference.set(handler, this, translationHandler, key);
 
-		this.addEventListener(key, translationHandler);
+		this.addEventListener(key, translationHandler, queue);
 	},
-	"can.offKeyValue": function(key, handler){
-		this.removeEventListener(key, singleReference.getAndDelete(handler, this, key) );
+	"can.offKeyValue": function(key, handler, queue){
+		this.removeEventListener(key, singleReference.getAndDelete(handler, this, key), queue );
 	},
 	"can.keyHasDependencies": function(key) {
 		return !!(this._computedAttrs && this._computedAttrs[key] &&

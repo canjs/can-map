@@ -44,7 +44,7 @@ var mapHelpers = {
 		return obj && !isPromise(obj) && (Array.isArray(obj) || isPlainObject(obj) );
 	},
 	reflectSerialize: function(unwrapped){
-		this.each(function(val, name){
+		this.forEach(function(val, name){
 			if( this.___serialize ) {
 				val = this.___serialize(name, val);
 			} else {
@@ -57,7 +57,7 @@ var mapHelpers = {
 		return unwrapped;
 	},
 	reflectUnwrap: function(unwrapped){
-		this.each(function(value, key){
+		this.forEach(function(value, key){
 			if(value !== undefined) {
 				unwrapped[key] = canReflect.unwrap(value);
 			}
@@ -103,7 +103,7 @@ var mapHelpers = {
 
 			serializeMap[how][cid] = where;
 			// Go through each property.
-			map.each(function (val, name) {
+			map.forEach(function (val, name) {
 				// If the value is an `object`, and has an `attr` or `serialize` function.
 				var result,
 					isObservable = canReflect.isObservableLike(val),

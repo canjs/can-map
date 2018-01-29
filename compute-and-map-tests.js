@@ -1,10 +1,11 @@
 /*jshint -W079 */
 var Map = require('can-map');
-var canCompute = require('can-compute');
+var Observation = require('can-observation');
+var SimpleObservable = require("can-simple-observable");
 var List = require('can-list');
 
-test('Getting attribute that is a canCompute should return the compute and not the value of the compute (#530)', function () {
-	var compute = canCompute('before');
+test('Getting attribute that is observable should return itself and not its value (#530)', function () {
+	var compute = new SimpleObservable('before');
 	var map = new Map({
 		time: compute
 	});
@@ -29,7 +30,7 @@ test("can.each used with maps", function () {
 
 test("computed properties don't cause memory leaks", function () {
 	var computeMap = Map.extend({
-		'name': canCompute(function(){
+		'name': new Observation(function(){
 			return this.attr('first') + this.attr('last');
 		})
 	}),
@@ -51,9 +52,9 @@ test("computed properties don't cause memory leaks", function () {
 test('Creating map in compute dispatches all events properly', function() {
 	expect(2);
 
-	var source = canCompute(0);
+	var source = new SimpleObservable(0);
 
-	var c = canCompute(function() {
+	var c = new Observation(function() {
 		var map = new Map();
 		source();
 		map.bind("foo", function(){
@@ -73,7 +74,7 @@ test('Creating map in compute dispatches all events properly', function() {
 
 test("Map::attr setting is observable", function() {
 	expect(0);
-	var c = canCompute(function() {
+	var c = new Observation(function() {
 		return new Map();
 	});
 

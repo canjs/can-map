@@ -21,7 +21,7 @@
 //
 // [bubble.events](bubble-events) controls which events setup bubbling.
 
-var canEvent = require('can-event');
+var canEvent = require('can-event-queue/map/map');
 
 var makeArray = require('can-util/js/make-array/make-array');
 var canReflect = require('can-reflect');
