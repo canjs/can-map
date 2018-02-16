@@ -41,7 +41,7 @@
     "can-observation-recorder": "<2.0.0",
     "can-queues": "<2.0.0",
     "can-reflect": "^1.7.2",
-    "can-simple-observable": "^2.0.0",
+    "can-simple-observable": "^2.0.2",
     "can-stache-key": "^1.0.0",
     "can-symbol": "^1.4.1",
     "can-types": "^1.1.0",
