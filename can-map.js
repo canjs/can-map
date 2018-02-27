@@ -406,7 +406,7 @@ var Map = Construct.extend(
 		___set: function (prop, val) {
 			var computedAttr = this._computedAttrs[prop];
 			if ( computedAttr ) {
-				canReflect.setKeyValue(computedAttr.compute, val);
+				canReflect.setValue(computedAttr.compute, val);
 			} else {
 				this._data[prop] = val;
 			}
