@@ -492,3 +492,9 @@ QUnit.test("can.isBound", function(){
 	var p = new Person();
 	QUnit.ok(! p[canSymbol.for("can.isBound")](), "not bound");
 });
+
+QUnit.test("prototype properties", function(assert) {
+	var MyMap = Map.extend({ letters: "ABC" });
+	var map = new MyMap();
+	assert.equal(map.attr("letters"), "ABC");
+});
