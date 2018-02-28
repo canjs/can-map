@@ -101,10 +101,8 @@ var Map = Construct.extend(
 					if (
 						prop !== "define" &&
 						prop !== "constructor" &&
-						(
-						typeof this.prototype[prop] !== "function" && !canReflect.isValueLike(this.prototype[prop]) ||
-						this.prototype[prop].prototype instanceof Construct
-						)
+						(typeof this.prototype[prop] !== "function" ||
+							this.prototype[prop].prototype instanceof Construct)
 					) {
 						this.defaults[prop] = this.prototype[prop];
 					} else if (canReflect.isObservableLike(this.prototype[prop])) {
