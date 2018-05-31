@@ -485,7 +485,7 @@ var Map = Construct.extend(
 		// or removes old properties.
 		// Then it goes through the remaining ones to be added and sets those properties.
 		_setAttrs: function (props, remove) {
-			if(remove === true) {
+			if(remove === true || remove === "true") {
 				this[canSymbol.for("can.updateDeep")](props);
 			} else {
 				this[canSymbol.for("can.assignDeep")](props);

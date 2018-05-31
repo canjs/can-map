@@ -512,3 +512,15 @@ QUnit.test("can read numbers", function(assert) {
 
 	canReflect.setKeyValue(map, 0, "one");
 });
+
+QUnit.test("attr should work when remove === 'true'", function(assert) {
+	var map = new Map({ 0: "zero" });
+
+	map.attr({ 1: "one" }, "true");
+
+	assert.equal(canReflect.getKeyValue(map, 0), undefined);
+	assert.equal(map.attr(0), undefined);
+
+	assert.equal(canReflect.getKeyValue(map, 1), "one");
+	assert.equal(map.attr(1), "one");
+});
