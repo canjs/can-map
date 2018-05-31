@@ -498,3 +498,29 @@ QUnit.test("prototype properties", function(assert) {
 	var map = new MyMap();
 	assert.equal(map.attr("letters"), "ABC");
 });
+
+QUnit.test("can read numbers", function(assert) {
+	var map = new Map({ 0: "zero" });
+	assert.equal(canReflect.getKeyValue(map, 0), "zero");
+	assert.equal(map.attr(0), "zero");
+
+
+	canReflect.onKeyValue(0, function handler(ev, newVal) {
+		assert.equal(newVal, "one");
+		canReflect.offKeyValue(0, handler);
+	});
+
+	canReflect.setKeyValue(map, 0, "one");
+});
+
+QUnit.test("attr should work when remove === 'true'", function(assert) {
+	var map = new Map({ 0: "zero" });
+
+	map.attr({ 1: "one" }, "true");
+
+	assert.equal(canReflect.getKeyValue(map, 0), undefined);
+	assert.equal(map.attr(0), undefined);
+
+	assert.equal(canReflect.getKeyValue(map, 1), "one");
+	assert.equal(map.attr(1), "one");
+});
