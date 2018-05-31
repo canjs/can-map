@@ -230,7 +230,7 @@ var Map = Construct.extend(
 			}
 			else if (arguments.length === 1) {
 				// Get a single attribute.
-				return this._get(attr+"");
+				return this._get(attr);
 			} else {
 				// Set an attribute.
 				this._set(attr+"", val);
@@ -245,6 +245,7 @@ var Map = Construct.extend(
 		// To read the actual values, `_get` calls
 		// `___get`.
 		_get: function (attr) {
+			attr = attr + "";
 			var dotIndex = attr.indexOf('.');
 
 			if( dotIndex >= 0 ) {
@@ -307,6 +308,7 @@ var Map = Construct.extend(
 		// If the map is initializing, the current value does not need to be
 		// read because no change events are dispatched anyway.
 		_set: function (attr, value, keepKey) {
+			attr = attr + "";
 
 			var dotIndex = attr.indexOf('.'),
 				current;
