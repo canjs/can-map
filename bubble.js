@@ -1,3 +1,4 @@
+"use strict";
 // # can/map/map_helpers
 // Helpers that enable bubbling of an event on a child object to a
 // parent event on a parent object. Bubbling works by listening on the child object
