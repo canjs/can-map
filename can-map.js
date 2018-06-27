@@ -75,13 +75,15 @@ var Map = Construct.extend(
 				};
 				// Provide warnings if can.Map is used incorrectly.
 				//!steal-remove-start
-				if(this.prototype.define && !mapHelpers.define) {
-					dev.warn("can/map/define is not included, yet there is a define property "+
-					"used. You may want to add this plugin.");
-				}
-				if(this.define && !mapHelpers.define) {
-					dev.warn("The define property should be on the map's prototype properties, "+
-					"not the static properties. Also, can/map/define is not included.");
+				if (process.env.NODE_ENV !== 'production') {
+					if(this.prototype.define && !mapHelpers.define) {
+						dev.warn("can/map/define is not included, yet there is a define property "+
+						"used. You may want to add this plugin.");
+					}
+					if(this.define && !mapHelpers.define) {
+						dev.warn("The define property should be on the map's prototype properties, "+
+						"not the static properties. Also, can/map/define is not included.");
+					}
 				}
 				//!steal-remove-end
 
