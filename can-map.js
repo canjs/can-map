@@ -22,19 +22,18 @@ var Construct = require('can-construct');
 var ObservationRecorder = require('can-observation-recorder');
 var ObserveReader = require('can-stache-key');
 var canCompute = require('can-compute');
-var singleReference = require('can-util/js/single-reference/single-reference');
+var singleReference = require('can-single-reference');
 
 var namespace = require("can-namespace");
-var dev = require("can-util/js/dev/dev");
+var dev = require("can-log/dev/dev");
 var CID = require("can-cid");
-var deepAssign = require("can-util/js/deep-assign/deep-assign");
 //var isFunction = require("can-util/js/is-function/is-function");
-var assign = require("can-util/js/assign/assign");
+var assign = require("can-assign");
 var types = require("can-types");
 var canReflect = require("can-reflect");
 var canSymbol = require("can-symbol");
-var CIDSet = require('can-util/js/cid-set/cid-set');
-var CIDMap = require("can-util/js/cid-map/cid-map");
+var CIDSet = require('can-cid/set/set');
+var CIDMap = require("can-cid/map/map");
 var canQueues = require("can-queues");
 
 // properties that can't be observed on ... no matter what
@@ -177,7 +176,7 @@ var Map = Construct.extend(
 			var teardownMapping = obj && mapHelpers.addToMap(obj, this);
 
 			var defaultValues = this._setupDefaults(obj);
-			var data = assign(deepAssign(true, {}, defaultValues), obj);
+			var data = assign(canReflect.assignDeep({}, defaultValues), obj);
 
 			this.attr(data);
 

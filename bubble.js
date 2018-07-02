@@ -23,9 +23,11 @@
 
 var canEvent = require('can-event-queue/map/map');
 
-var makeArray = require('can-util/js/make-array/make-array');
 var canReflect = require('can-reflect');
-var isEmptyObject = require('can-util/js/is-empty-object/is-empty-object');
+var makeArray = canReflect.toArray;
+var isEmptyObject = function(value) {
+	return canReflect.size(value) === 0;
+};
 
 
 var bubble = {
