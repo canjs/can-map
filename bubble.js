@@ -23,9 +23,7 @@
 
 var canEvent = require('can-event-queue/map/map');
 
-var makeArray = require('can-util/js/make-array/make-array');
 var canReflect = require('can-reflect');
-var isEmptyObject = require('can-util/js/is-empty-object/is-empty-object');
 
 
 var bubble = {
@@ -78,7 +76,7 @@ var bubble = {
 				if (parent._bubbleBindings && !parent._bubbleBindings[bubbleEvent] ) {
 					delete parent._bubbleBindings[bubbleEvent];
 					bubble.teardownChildrenFrom(parent, bubbleEvent);
-					if(isEmptyObject(parent._bubbleBindings)) {
+					if(canReflect.size(parent._bubbleBindings) === 0) {
 						delete parent._bubbleBindings;
 					}
 				}
@@ -155,7 +153,7 @@ var bubble = {
 		toParent: function(child, parent, prop, eventName) {
 			canEvent.listenTo.call(parent, child, eventName, function ( /* ev, attr */ ) {
 
-				var args = makeArray(arguments),
+				var args = canReflect.toArray(arguments),
 					ev = args.shift();
 
 				// Updates the nested property name that will be dispatched.
