@@ -1,3 +1,4 @@
+"use strict";
 /* jshint -W079 */
 // # can/map/map.js (aka can.Map)
 // `can.Map` provides the observable pattern for JavaScript objects. It

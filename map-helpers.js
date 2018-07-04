@@ -1,3 +1,4 @@
+"use strict";
 // # can/map/map_hepers
 // Helper functions that are primarily used to serialize
 // a map, or track the maps created from plain JavaScript objects.
