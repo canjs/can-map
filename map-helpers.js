@@ -3,10 +3,8 @@
 // Helper functions that are primarily used to serialize
 // a map, or track the maps created from plain JavaScript objects.
 // `can.Map` handles cycles in objects nicely!
-var isPlainObject = require('can-util/js/is-plain-object/is-plain-object');
-var isPromise = require('can-util/js/is-promise/is-promise');
 var CID = require('can-cid');
-var assign = require('can-util/js/assign/assign');
+var assign = require("can-assign");
 var canReflect = require('can-reflect');
 // ## POJOs to Map instance helpers
 
@@ -42,7 +40,7 @@ var mapHelpers = {
 	// ### can.mapHelpers.canMakeObserve
 	// Determines if an object can be made into an observable.
 	canMakeObserve: function (obj) {
-		return obj && !isPromise(obj) && (Array.isArray(obj) || isPlainObject(obj) );
+		return obj && !canReflect.isPromise(obj) && (Array.isArray(obj) || canReflect.isPlainObject(obj) );
 	},
 	reflectSerialize: function(unwrapped){
 		this.forEach(function(val, name){
