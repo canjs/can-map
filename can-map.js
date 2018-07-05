@@ -28,7 +28,6 @@ var singleReference = require('can-single-reference');
 var namespace = require("can-namespace");
 var dev = require("can-log/dev/dev");
 var CID = require("can-cid");
-//var isFunction = require("can-util/js/is-function/is-function");
 var assign = require("can-assign");
 var types = require("can-types");
 var canReflect = require("can-reflect");
