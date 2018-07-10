@@ -47,7 +47,7 @@
     "can-single-reference": "^1.0.0",
     "can-stache-key": "^1.0.0",
     "can-symbol": "^1.4.1",
-    "can-types": "^1.1.0"
+    "can-types": "^1.4.0"
   },
   "devDependencies": {
     "can-observation": "^4.0.0",
