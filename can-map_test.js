@@ -524,3 +524,17 @@ QUnit.test("attr should work when remove === 'true'", function(assert) {
 	assert.equal(canReflect.getKeyValue(map, 1), "one");
 	assert.equal(map.attr(1), "one");
 });
+
+QUnit.test("constructor should not bind on __keys (#106)", function(assert) {
+	var map;
+
+	var comp = canCompute(function() {
+		map = new Map();
+	});
+
+	canReflect.onValue(comp, function() {});
+
+	map.attr('foo', 'bar');
+
+	assert.equal(map.attr('foo'), 'bar', 'map should not be reset');
+});

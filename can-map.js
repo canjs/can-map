@@ -656,7 +656,9 @@ canReflect.assignSymbols(Map.prototype,{
 
 	// -shape
 	"can.getOwnEnumerableKeys": function(){
-		ObservationRecorder.add(this, '__keys');
+		if (!this.__inSetup) {
+			ObservationRecorder.add(this, '__keys');
+		}
 		var enumerable = this.constructor.enumerable;
 		if(enumerable) {
 			return Object.keys(this._data).filter(function(key){
