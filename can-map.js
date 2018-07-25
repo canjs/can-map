@@ -467,7 +467,12 @@ var Map = Construct.extend(
 		// ### _getAttrs
 		// Returns the values of all attributes as a plain JavaScript object.
 		_getAttrs: function(){
-			return canReflect.unwrap(this, CIDMap);
+			if(this._legacyAttrBehavior) {
+				return mapHelpers.serialize(this, 'attr', {});
+			} else {
+				return canReflect.unwrap(this, CIDMap);
+			}
+
 		},
 		// ### _setAttrs
 		// Sets multiple properties on this object at once.
@@ -475,11 +480,64 @@ var Map = Construct.extend(
 		// or removes old properties.
 		// Then it goes through the remaining ones to be added and sets those properties.
 		_setAttrs: function (props, remove) {
+			if(this._legacyAttrBehavior) {
+				return this.__setAttrs(props, remove);
+			}
 			if(remove === true) {
 				this[canSymbol.for("can.updateDeep")](props);
 			} else {
 				this[canSymbol.for("can.assignDeep")](props);
 			}
+			return this;
+		},
+		__setAttrs: function (props, remove) {
+			props = assign({}, props);
+			var prop,
+				self = this,
+				newVal;
+
+			// Batch all of the change events until we are done.
+			canBatch.start();
+			// Merge current properties with the new ones.
+			this._each(function (curVal, prop) {
+				// You can not have a _cid property; abort.
+				if (prop === "_cid") {
+					return;
+				}
+				newVal = props[prop];
+
+				// If we are merging, remove the property if it has no value.
+				if (newVal === undefined) {
+					if (remove) {
+						self.removeAttr(prop);
+					}
+					return;
+				}
+
+				// Run converter if there is one. Remove in 3.0.
+				if (self.__convert) {
+					newVal = self.__convert( prop, newVal );
+				}
+
+				if ( types.isMapLike(curVal) && mapHelpers.canMakeObserve(newVal) ) {
+					curVal.attr(newVal, remove);
+					// Otherwise just set.
+				} else if (curVal !== newVal) {
+					self.__set(prop, self.__type(newVal, prop), curVal);
+				}
+
+				delete props[prop];
+			});
+			// Add remaining props.
+			for (prop in props) {
+				// Ignore _cid.
+				if (prop !== "_cid") {
+					newVal = props[prop];
+					this._set(prop, newVal, true);
+				}
+
+			}
+			canBatch.stop();
 			return this;
 		},
 

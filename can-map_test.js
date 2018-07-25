@@ -455,3 +455,46 @@ QUnit.test("registered symbols", function() {
 	a[canSymbol.for("can.offKeyValue")]("a", handler);
 	a.attr("a", "d"); // doesn't trigger handler
 });
+
+QUnit.test(".attr(props) should overwrite if _legacyAttrBehavior is true (#112)", function(){
+	Map.prototype._legacyAttrBehavior = true;
+
+	var myMap1Instance = new Map({prop1: new Map()});
+
+	var changes = 0;
+	myMap1Instance.on("prop1", function() {
+		changes++;
+	});
+
+	var map2 = new Map({prop1: "xyz"});
+
+	myMap1Instance.attr({
+		"prop1": map2
+	});
+
+	delete Map.prototype._legacyAttrBehavior;
+	QUnit.equal(changes,1, "caused a change event");
+
+	QUnit.equal(myMap1Instance.attr("prop1"), map2, "overwrite with maps");
+});
+
+QUnit.test(".attr() leaves typed instances alone if _legacyAttrBehavior is true (#111)", function(){
+
+	Map.prototype._legacyAttrBehavior = true;
+
+
+	function MyClass(value){
+		this.value = value;
+	}
+	MyClass.prototype.log = function(){
+		return this.value;
+	};
+
+	var myMap = new Map({
+		myClass: new MyClass(5)
+	});
+
+	QUnit.equal( myMap.attr().myClass,  myMap.attr("myClass") )
+
+	delete Map.prototype._legacyAttrBehavior;
+});
