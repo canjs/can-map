@@ -498,3 +498,17 @@ QUnit.test(".attr() leaves typed instances alone if _legacyAttrBehavior is true 
 
 	delete Map.prototype._legacyAttrBehavior;
 });
+
+QUnit.test(".serialize() leaves typed instances alone if _legacyAttrBehavior is true", function(){
+	function MyClass(value) {
+		this.value = value;
+	}
+
+	var myMap = new Map({
+		_legacyAttrBehavior: true,
+		myClass: new MyClass('foo')
+	});
+
+	var ser = myMap.serialize();
+	QUnit.equal(ser.myClass, myMap.attr("myClass"));
+});
