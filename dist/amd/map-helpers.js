@@ -1,4 +1,4 @@
-/*can-map@3.4.1#map-helpers*/
+/*can-map@3.4.2#map-helpers*/
 define([
     'require',
     'exports',
@@ -7,13 +7,15 @@ define([
     'can-util/js/is-promise',
     'can-cid',
     'can-util/js/assign',
-    'can-reflect'
+    'can-reflect',
+    'can-symbol'
 ], function (require, exports, module) {
     var isPlainObject = require('can-util/js/is-plain-object');
     var isPromise = require('can-util/js/is-promise');
     var CID = require('can-cid');
     var assign = require('can-util/js/assign');
     var canReflect = require('can-reflect');
+    var canSymbol = require('can-symbol');
     var madeMap = null;
     var teardownMap = function () {
         for (var cid in madeMap) {
@@ -66,6 +68,49 @@ define([
                 });
             }
             return map;
+        },
+        serialize: function () {
+            var serializeMap = null;
+            return function (map, how, where) {
+                var cid = CID(map), firstSerialize = false;
+                if (!serializeMap) {
+                    firstSerialize = true;
+                    serializeMap = {
+                        attr: {},
+                        serialize: {}
+                    };
+                }
+                serializeMap[how][cid] = where;
+                map.each(function (val, name) {
+                    var result, isObservable = canReflect.isObservableLike(val), serialized = isObservable && serializeMap[how][CID(val)];
+                    if (serialized) {
+                        result = serialized;
+                    } else {
+                        if (map['___' + how]) {
+                            result = map['___' + how](name, val);
+                        } else {
+                            result = mapHelpers.getValue(map, name, val, how);
+                        }
+                    }
+                    if (result !== undefined) {
+                        where[name] = result;
+                    }
+                });
+                if (firstSerialize) {
+                    serializeMap = null;
+                }
+                return where;
+            };
+        }(),
+        getValue: function (map, name, val, how) {
+            if (how === 'attr') {
+                how = canSymbol.for('can.getValue');
+            }
+            if (canReflect.isObservableLike(val) && val[how]) {
+                return val[how]();
+            } else {
+                return val;
+            }
         },
         define: null,
         addComputedAttr: function (map, attrName, compute) {

@@ -1,4 +1,4 @@
-/*can-map@3.4.1#can-map*/
+/*can-map@3.4.2#can-map*/
 define([
     'require',
     'exports',
@@ -236,17 +236,62 @@ define([
             }
         },
         ___serialize: function (name, val) {
-            return canReflect.serialize(val, CIDMap);
+            if (this._legacyAttrBehavior) {
+                return mapHelpers.getValue(this, name, val, 'serialize');
+            } else {
+                return canReflect.serialize(val, CIDMap);
+            }
         },
         _getAttrs: function () {
-            return canReflect.unwrap(this, CIDMap);
+            if (this._legacyAttrBehavior) {
+                return mapHelpers.serialize(this, 'attr', {});
+            } else {
+                return canReflect.unwrap(this, CIDMap);
+            }
         },
         _setAttrs: function (props, remove) {
+            if (this._legacyAttrBehavior) {
+                return this.__setAttrs(props, remove);
+            }
             if (remove === true) {
                 this[canSymbol.for('can.updateDeep')](props);
             } else {
                 this[canSymbol.for('can.assignDeep')](props);
             }
+            return this;
+        },
+        __setAttrs: function (props, remove) {
+            props = assign({}, props);
+            var prop, self = this, newVal;
+            canBatch.start();
+            this._each(function (curVal, prop) {
+                if (prop === '_cid') {
+                    return;
+                }
+                newVal = props[prop];
+                if (newVal === undefined) {
+                    if (remove) {
+                        self.removeAttr(prop);
+                    }
+                    return;
+                }
+                if (self.__convert) {
+                    newVal = self.__convert(prop, newVal);
+                }
+                if (types.isMapLike(curVal) && mapHelpers.canMakeObserve(newVal)) {
+                    curVal.attr(newVal, remove);
+                } else if (curVal !== newVal) {
+                    self.__set(prop, self.__type(newVal, prop), curVal);
+                }
+                delete props[prop];
+            });
+            for (prop in props) {
+                if (prop !== '_cid') {
+                    newVal = props[prop];
+                    this._set(prop, newVal, true);
+                }
+            }
+            canBatch.stop();
             return this;
         },
         serialize: function () {
