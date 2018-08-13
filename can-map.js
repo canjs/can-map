@@ -461,7 +461,11 @@ var Map = Construct.extend(
 		// Serializes a property.  Uses map helpers to
 		// recursively serialize nested observables.
 		___serialize: function(name, val){
-			return canReflect.serialize(val, CIDMap);
+			if(this._legacyAttrBehavior) {
+				return mapHelpers.getValue(this, name, val, "serialize");
+			} else {
+				return canReflect.serialize(val, CIDMap);
+			}
 		},
 
 		// ### _getAttrs
