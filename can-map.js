@@ -524,7 +524,11 @@ var Map = Construct.extend(
 				}
 
 				if ( types.isMapLike(curVal) && mapHelpers.canMakeObserve(newVal) ) {
-					curVal.attr(newVal, remove);
+					if(remove === true) {
+						canReflect.updateDeep(curVal, newVal);
+					} else {
+						canReflect.assignDeep(curVal, newVal);
+					}
 					// Otherwise just set.
 				} else if (curVal !== newVal) {
 					self.__set(prop, self.__type(newVal, prop), curVal);
