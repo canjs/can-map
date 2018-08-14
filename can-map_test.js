@@ -596,10 +596,14 @@ QUnit.test(".serialize() leaves typed instances alone if _legacyAttrBehavior is 
 	QUnit.equal(ser.myClass, myMap.attr("myClass"));
 });
 
-QUnit.test("keys with undefined values should not be dropped", function() {
+QUnit.test("keys with undefined values should not be dropped (issue#84)", function() {
+	// handles new instances
 	obj1 = { "keepMe": undefined };
 	var map = new Map(obj1);
+	// handles late props
+	map.attr('foo', undefined);
+
 	var keys = Map.keys(map);
 
-	QUnit.deepEqual( keys, ["keepMe"]);
+	QUnit.deepEqual(keys, ["keepMe", "foo"])
 });

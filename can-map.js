@@ -377,7 +377,7 @@ var Map = Construct.extend(
 		// Calls `___set` to do the actual setting.
 		__set: function (prop, value, current) {
 
-			if ( value !== current || this.__inSetup ) {
+			if ( value !== current || !Object.prototype.hasOwnProperty.call( this._data, prop ) ) {
 				var computedAttr = this._computedAttrs[prop];
 
 				// Dispatch an "add" event if adding a new property.
