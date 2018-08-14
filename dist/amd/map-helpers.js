@@ -1,4 +1,4 @@
-/*can-map@3.4.2#map-helpers*/
+/*can-map@3.6.0#map-helpers*/
 define([
     'require',
     'exports',

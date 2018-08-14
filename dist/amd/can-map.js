@@ -1,4 +1,4 @@
-/*can-map@3.4.2#can-map*/
+/*can-map@3.6.0#can-map*/
 define([
     'require',
     'exports',
@@ -279,7 +279,11 @@ define([
                     newVal = self.__convert(prop, newVal);
                 }
                 if (types.isMapLike(curVal) && mapHelpers.canMakeObserve(newVal)) {
-                    curVal.attr(newVal, remove);
+                    if (remove === true) {
+                        canReflect.updateDeep(curVal, newVal);
+                    } else {
+                        canReflect.assignDeep(curVal, newVal);
+                    }
                 } else if (curVal !== newVal) {
                     self.__set(prop, self.__type(newVal, prop), curVal);
                 }

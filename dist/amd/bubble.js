@@ -1,4 +1,4 @@
-/*can-map@3.4.2#bubble*/
+/*can-map@3.6.0#bubble*/
 define([
     'require',
     'exports',

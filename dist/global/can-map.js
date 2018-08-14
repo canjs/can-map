@@ -269,7 +269,7 @@ define('can-symbol', [
         return this;
     }(), require, exports, module));
 });
-/*can-reflect@1.17.2#reflections/helpers*/
+/*can-reflect@1.17.3#reflections/helpers*/
 define('can-reflect/reflections/helpers', [
     'require',
     'exports',
@@ -303,7 +303,7 @@ define('can-reflect/reflections/helpers', [
         }
     };
 });
-/*can-reflect@1.17.2#reflections/type/type*/
+/*can-reflect@1.17.3#reflections/type/type*/
 define('can-reflect/reflections/type/type', [
     'require',
     'exports',
@@ -501,7 +501,7 @@ define('can-reflect/reflections/type/type', [
         isPlainObject: isPlainObject
     };
 });
-/*can-reflect@1.17.2#reflections/call/call*/
+/*can-reflect@1.17.3#reflections/call/call*/
 define('can-reflect/reflections/call/call', [
     'require',
     'exports',
@@ -547,7 +547,7 @@ define('can-reflect/reflections/call/call', [
         }
     };
 });
-/*can-reflect@1.17.2#reflections/get-set/get-set*/
+/*can-reflect@1.17.3#reflections/get-set/get-set*/
 define('can-reflect/reflections/get-set/get-set', [
     'require',
     'exports',
@@ -668,7 +668,7 @@ define('can-reflect/reflections/get-set/get-set', [
     reflections['delete'] = reflections.deleteKeyValue;
     module.exports = reflections;
 });
-/*can-reflect@1.17.2#reflections/observe/observe*/
+/*can-reflect@1.17.3#reflections/observe/observe*/
 define('can-reflect/reflections/observe/observe', [
     'require',
     'exports',
@@ -764,7 +764,7 @@ define('can-reflect/reflections/observe/observe', [
         }
     };
 });
-/*can-reflect@1.17.2#reflections/shape/shape*/
+/*can-reflect@1.17.3#reflections/shape/shape*/
 define('can-reflect/reflections/shape/shape', [
     'require',
     'exports',
@@ -789,9 +789,9 @@ define('can-reflect/reflections/shape/shape', [
     if (typeof Map === 'function') {
         ArrayMap = Map;
     } else {
-        function isEven(num) {
+        var isEven = function isEven(num) {
             return !(num % 2);
-        }
+        };
         ArrayMap = function () {
             this.contents = [];
         };
@@ -1382,7 +1382,7 @@ define('can-reflect/reflections/shape/shape', [
     shapeReflections.keys = shapeReflections.getOwnEnumerableKeys;
     module.exports = shapeReflections;
 });
-/*can-reflect@1.17.2#reflections/shape/schema/schema*/
+/*can-reflect@1.17.3#reflections/shape/schema/schema*/
 define('can-reflect/reflections/shape/schema/schema', [
     'require',
     'exports',
@@ -1488,7 +1488,7 @@ define('can-reflect/reflections/shape/schema/schema', [
     };
     module.exports = schemaReflections;
 });
-/*can-reflect@1.17.2#reflections/get-name/get-name*/
+/*can-reflect@1.17.3#reflections/get-name/get-name*/
 define('can-reflect/reflections/get-name/get-name', [
     'require',
     'exports',
@@ -1542,7 +1542,7 @@ define('can-reflect/reflections/get-name/get-name', [
         getName: getName
     };
 });
-/*can-reflect@1.17.2#types/map*/
+/*can-reflect@1.17.3#types/map*/
 define('can-reflect/types/map', [
     'require',
     'exports',
@@ -1592,7 +1592,7 @@ define('can-reflect/types/map', [
         });
     }
 });
-/*can-reflect@1.17.2#types/set*/
+/*can-reflect@1.17.3#types/set*/
 define('can-reflect/types/set', [
     'require',
     'exports',
@@ -1658,7 +1658,7 @@ define('can-reflect/types/set', [
         });
     }
 });
-/*can-reflect@1.17.2#can-reflect*/
+/*can-reflect@1.17.3#can-reflect*/
 define('can-reflect', [
     'require',
     'exports',
@@ -3194,7 +3194,7 @@ define('can-event', [
     });
     module.exports = namespace.event = canEvent;
 });
-/*can-map@3.4.2#bubble*/
+/*can-map@3.6.0#bubble*/
 define('can-map/bubble', [
     'require',
     'exports',
@@ -3369,7 +3369,7 @@ define('can-util/js/assign/assign', [
     var namespace = require('can-namespace');
     module.exports = namespace.assign = require('can-assign');
 });
-/*can-map@3.4.2#map-helpers*/
+/*can-map@3.6.0#map-helpers*/
 define('can-map/map-helpers', [
     'require',
     'exports',
@@ -3891,7 +3891,7 @@ define('can-string', function (require, exports, module) {
     };
     module.exports = string;
 });
-/*can-construct@3.5.0#can-construct*/
+/*can-construct@3.5.1#can-construct*/
 define('can-construct', [
     'require',
     'exports',
@@ -5452,7 +5452,7 @@ define('can-util/js/deep-assign/deep-assign', [
     }
     module.exports = namespace.deepAssign = deepAssign;
 });
-/*can-map@3.4.2#can-map*/
+/*can-map@3.6.0#can-map*/
 define('can-map', [
     'require',
     'exports',
@@ -5733,7 +5733,11 @@ define('can-map', [
                     newVal = self.__convert(prop, newVal);
                 }
                 if (types.isMapLike(curVal) && mapHelpers.canMakeObserve(newVal)) {
-                    curVal.attr(newVal, remove);
+                    if (remove === true) {
+                        canReflect.updateDeep(curVal, newVal);
+                    } else {
+                        canReflect.assignDeep(curVal, newVal);
+                    }
                 } else if (curVal !== newVal) {
                     self.__set(prop, self.__type(newVal, prop), curVal);
                 }
