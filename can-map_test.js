@@ -607,3 +607,37 @@ QUnit.test("keys with undefined values should not be dropped (issue#84)", functi
 
 	QUnit.deepEqual(keys, ["keepMe", "foo"])
 });
+
+QUnit.test("Can assign nested properties that are not CanMaps", function(){
+	var MyType = function() {
+		this.one = 'one';
+		this.two = 'two';
+		this.three = 'three';
+	};
+	MyType.prototype[canSymbol.for("can.onKeyValue")] = function(){};
+	MyType.prototype[canSymbol.for("can.isMapLike")] = true;
+
+	var map = new Map({
+		_legacyAttrBehavior: true,
+		foo: 'bar',
+		prop: new MyType()
+	});
+
+	map.attr({
+		prop: {one: '1', two: '2'}
+	});
+
+	// Did an assign
+	QUnit.equal(map.attr("prop.one"), "1");
+	QUnit.equal(map.attr("prop.two"), "2");
+	QUnit.equal(map.attr("prop.three"), "three");
+
+	// An update
+	map.attr({
+		prop: {one: 'one', two: 'two'}
+	}, true);
+
+	QUnit.equal(map.attr("prop.one"), "one");
+	QUnit.equal(map.attr("prop.two"), "two");
+	QUnit.equal(map.attr("prop.three"), undefined);
+});
