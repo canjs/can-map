@@ -125,7 +125,7 @@ test("cyclical objects (#521)", function () {
 	}
 	var ref = new Map(references)
 
-	ok(ref.attr('husband') === ref.attr('friend'), "multiple properties point to the same thing")
+	ok(ref.attr('husband') === ref.attr('friend'), "multiple properties point to the same thing");
 
 })
 
@@ -640,4 +640,16 @@ QUnit.test("Can assign nested properties that are not CanMaps", function(){
 	QUnit.equal(map.attr("prop.one"), "one");
 	QUnit.equal(map.attr("prop.two"), "two");
 	QUnit.equal(map.attr("prop.three"), undefined);
+});
+
+QUnit.test("assignDeep copy objects instead of reference", function() {
+	var myMap = new Map();
+	var map = new Map({
+		foo: {
+			bar: "baz"
+		}
+	});
+
+	myMap[canSymbol.for("can.assignDeep")](map);
+	QUnit.notEqual(myMap.foo, map.foo);
 });

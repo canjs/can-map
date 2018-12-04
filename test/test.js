@@ -1,1 +1,1 @@
-import '../can-map_test';
+require('../can-map_test');
