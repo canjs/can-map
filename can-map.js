@@ -739,6 +739,9 @@ canReflect.assignSymbols(Map.prototype,{
 	"can.assignDeep": function(source){
 		canQueues.batch.start();
 		// TODO: we should probably just throw an error instead of cleaning
+		if (canReflect.isMapLike(source) && source.serialize) {
+			source = source.serialize();
+		} 
 		canReflect.assignDeepMap(this, mapHelpers.removeSpecialKeys(canReflect.assignMap({}, source)));
 		canQueues.batch.stop();
 	},

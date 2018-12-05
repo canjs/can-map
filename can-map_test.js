@@ -649,7 +649,6 @@ QUnit.test("assignDeep copy objects instead of reference", function() {
 			bar: "baz"
 		}
 	});
-
 	myMap[canSymbol.for("can.assignDeep")](map);
 	QUnit.notEqual(myMap.foo, map.foo);
 });
