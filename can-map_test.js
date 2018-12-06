@@ -642,13 +642,13 @@ QUnit.test("Can assign nested properties that are not CanMaps", function(){
 	QUnit.equal(map.attr("prop.three"), undefined);
 });
 
-QUnit.test("assignDeep copy objects instead of reference", function() {
-	var myMap = new Map();
+QUnit.test("assignDeepMap Symbol should reference objects", function() {
+	var a = new Map();
 	var map = new Map({
-		foo: {
-			bar: "baz"
+		myType: {
+			val: "foo"
 		}
 	});
-	myMap[canSymbol.for("can.assignDeep")](map);
-	QUnit.notEqual(myMap.foo, map.foo);
+	canReflect.assignDeepMap(a, map);
+	QUnit.equal(a.myType, map.myType);
 });

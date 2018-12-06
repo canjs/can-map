@@ -43,6 +43,29 @@ var unobservable = {
 
 var hasOwnProperty = ({}).hasOwnProperty;
 
+// Taken from canReflect to be used in can.assignDeepMap Symbol
+var makeGetFirstSymbolValue = function(symbolNames){
+	var symbols = symbolNames.map(function(name){
+		return canSymbol.for(name);
+	});
+	var length = symbols.length;
+
+	return function getFirstSymbol(obj){
+		var index = -1;
+
+		while (++index < length) {
+			if(obj[symbols[index]] !== undefined) {
+				return obj[symbols[index]];
+			}
+		}
+	};
+};
+
+var hasUpdateSymbol = makeGetFirstSymbolValue(["can.updateDeep","can.assignDeep","can.setKeyValue"]);
+var shouldUpdateOrAssign = function(obj){
+	return canReflect.isPlainObject(obj) || Array.isArray(obj) || !!hasUpdateSymbol(obj);
+};
+
 // Extend [can.Construct](../construct/construct.html) to make inheriting a `can.Map` easier.
 var Map = Construct.extend(
 	/**
@@ -561,7 +584,11 @@ var Map = Construct.extend(
 		},
 
 		serialize: function () {
-			return canReflect.serialize(this, CIDMap);
+			if(this._legacyAttrBehavior) {
+				return mapHelpers.serialize(this, 'attr', {});
+			} else {
+				return canReflect.serialize(this, CIDMap);
+			}
 		},
 
 
@@ -739,9 +766,6 @@ canReflect.assignSymbols(Map.prototype,{
 	"can.assignDeep": function(source){
 		canQueues.batch.start();
 		// TODO: we should probably just throw an error instead of cleaning
-		if (canReflect.isMapLike(source) && source.serialize) {
-			source = source.serialize();
-		} 
 		canReflect.assignDeepMap(this, mapHelpers.removeSpecialKeys(canReflect.assignMap({}, source)));
 		canQueues.batch.stop();
 	},
@@ -749,6 +773,29 @@ canReflect.assignSymbols(Map.prototype,{
 		canQueues.batch.start();
 		// TODO: we should probably just throw an error instead of cleaning
 		canReflect.updateDeepMap(this, mapHelpers.removeSpecialKeys(canReflect.assignMap({}, source)));
+		canQueues.batch.stop();
+	},
+	"can.assignDeepMap": function(source) {
+		canQueues.batch.start();
+		var getKeyValue = this[canSymbol.for("can.getKeyValue")];
+		var setKeyValue = this[canSymbol.for("can.setKeyValue")];
+
+		canReflect.eachKey(source, function(newVal, key){
+			if(!this._data[key]) {
+				canReflect.setKeyValue(this, key, newVal);
+			} else {
+				var curVal = getKeyValue.call(this, key);
+
+				// if either was primitive, no recursive update possible
+				if(newVal === curVal) {
+					// do nothing
+				} else if(canReflect.isPrimitive(curVal) || canReflect.isPrimitive(newVal) || shouldUpdateOrAssign(curVal) === false) {
+					setKeyValue.call(this, key, newVal);
+				} else {
+					canReflect.assignDeep(curVal, newVal);
+				}
+			}
+		}, this);
 		canQueues.batch.stop();
 	},
 	"can.unwrap": mapHelpers.reflectUnwrap,
