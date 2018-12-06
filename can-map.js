@@ -584,11 +584,7 @@ var Map = Construct.extend(
 		},
 
 		serialize: function () {
-			if(this._legacyAttrBehavior) {
-				return mapHelpers.serialize(this, 'attr', {});
-			} else {
-				return canReflect.serialize(this, CIDMap);
-			}
+			return canReflect.serialize(this, CIDMap);
 		},
 
 
