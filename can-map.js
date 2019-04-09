@@ -534,7 +534,7 @@ var Map = Construct.extend(
 					newVal = self.__convert( prop, newVal );
 				}
 
-				if ( types.isMapLike(curVal) && mapHelpers.canMakeObserve(newVal) ) {
+				if ( canReflect.isObservableLike(curVal) && canReflect.isMapLike(curVal) && mapHelpers.canMakeObserve(newVal) ) {
 					if(remove === true) {
 						canReflect.updateDeep(curVal, newVal);
 					} else {
