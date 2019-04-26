@@ -318,12 +318,12 @@ var Map = Construct.extend(
 				var first = attr.substr(0, dotIndex),
 					second = attr.substr(dotIndex+1);
 
-				current =  this.__inSetup ? undefined : this.___get( first );
+				current =  this[canSymbol.for("can.initializing")] ? undefined : this.___get( first );
 
 				if( canReflect.isMapLike(current) ) {
 					canReflect.setKeyValue(current, second, value);
 				} else {
-					current = this.__inSetup ? undefined : this.___get( attr );
+					current = this[canSymbol.for("can.initializing")] ? undefined : this.___get( attr );
 
 					// //Convert if there is a converter.  Remove in 3.0.
 					if (this.__convert) {
@@ -334,7 +334,7 @@ var Map = Construct.extend(
 				}
 
 			} else {
-				current = this.__inSetup ? undefined : this.___get( attr );
+				current = this[canSymbol.for("can.initializing")] ? undefined : this.___get( attr );
 
 				// //Convert if there is a converter.  Remove in 3.0.
 				if (this.__convert) {
@@ -722,7 +722,7 @@ canReflect.assignSymbols(Map.prototype,{
 
 	// -shape
 	"can.getOwnEnumerableKeys": function(){
-		if (!this.__inSetup) {
+		if (!this[canSymbol.for("can.initializing")]) {
 			ObservationRecorder.add(this, '__keys');
 		}
 		var enumerable = this.constructor.enumerable;
