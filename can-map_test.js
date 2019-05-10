@@ -12,7 +12,7 @@ var queues = require("can-queues");
 
 QUnit.module('can-map');
 
-test("Basic Map", 4, function () {
+QUnit.test("Basic Map", 4, function(assert) {
 
 	var state = new Map({
 		category: 5,
@@ -20,10 +20,10 @@ test("Basic Map", 4, function () {
 	});
 
 	state.bind("change", function (ev, attr, how, val, old) {
-		equal(attr, "category", "correct change name");
-		equal(how, "set");
-		equal(val, 6, "correct");
-		equal(old, 5, "correct");
+		assert.equal(attr, "category", "correct change name");
+		assert.equal(how, "set");
+		assert.equal(val, 6, "correct");
+		assert.equal(old, 5, "correct");
 	});
 
 	state.attr("category", 6);
@@ -32,7 +32,7 @@ test("Basic Map", 4, function () {
 
 });
 
-test("Nested Map", 5, function () {
+QUnit.test("Nested Map", 5, function(assert) {
 	var me = new Map({
 		name: {
 			first: "Justin",
@@ -40,13 +40,13 @@ test("Nested Map", 5, function () {
 		}
 	});
 
-	ok(me.attr("name") instanceof Map);
+	assert.ok(me.attr("name") instanceof Map);
 
 	me.bind("change", function (ev, attr, how, val, old) {
-		equal(attr, "name.first", "correct change name");
-		equal(how, "set");
-		equal(val, "Brian", "correct");
-		equal(old, "Justin", "correct");
+		assert.equal(attr, "name.first", "correct change name");
+		assert.equal(how, "set");
+		assert.equal(val, "Brian", "correct");
+		assert.equal(old, "Justin", "correct");
 	});
 
 	me.attr("name.first", "Brian");
@@ -55,16 +55,16 @@ test("Nested Map", 5, function () {
 
 });
 
-test("remove attr", function () {
+QUnit.test("remove attr", function(assert) {
 	var state = new Map({
 		category: 5,
 		productType: 4
 	});
 	state.removeAttr("category");
-	deepEqual(Map.keys(state), ["productType"], "one property");
+	assert.deepEqual(Map.keys(state), ["productType"], "one property");
 });
 
-test("remove attr on key with dot", function () {
+QUnit.test("remove attr on key with dot", function(assert) {
 	var state = new Map({
 		"key.with.dots": 12,
 		productType: 4
@@ -79,12 +79,12 @@ test("remove attr on key with dot", function () {
 	});
 	state.removeAttr("key.with.dots");
 	state2.removeAttr("key.with.someValue");
-	deepEqual( Map.keys(state), ["productType"], "one property");
-	deepEqual( Map.keys(state2), ["key.with.dots", "key"], "two properties");
-	deepEqual( Map.keys( state2.key["with"] ) , [], "zero properties");
+	assert.deepEqual( Map.keys(state), ["productType"], "one property");
+	assert.deepEqual( Map.keys(state2), ["key.with.dots", "key"], "two properties");
+	assert.deepEqual( Map.keys( state2.key["with"] ) , [], "zero properties");
 });
 
-test("nested event handlers are not run by changing the parent property (#280)", function () {
+QUnit.test("nested event handlers are not run by changing the parent property (#280)", function(assert) {
 
 	var person = new Map({
 		name: {
@@ -92,11 +92,11 @@ test("nested event handlers are not run by changing the parent property (#280)",
 		}
 	})
 	person.bind("name.first", function (ev, newName) {
-		ok(false, "name.first should never be called")
+		assert.ok(false, "name.first should never be called")
 		//equal(newName, "hank", "name.first handler called back with correct new name")
 	});
 	person.bind("name", function () {
-		ok(true, "name event triggered")
+		assert.ok(true, "name event triggered")
 	})
 
 	person.attr("name", {
@@ -105,16 +105,16 @@ test("nested event handlers are not run by changing the parent property (#280)",
 
 });
 
-test("cyclical objects (#521)", function () {
+QUnit.test("cyclical objects (#521)", function(assert) {
 
 	var foo = {};
 	foo.foo = foo;
 
 	var fooed = new Map(foo);
 
-	ok(true, "did not cause infinate recursion");
+	assert.ok(true, "did not cause infinate recursion");
 
-	ok(fooed.attr('foo') === fooed, "map points to itself")
+	assert.ok(fooed.attr('foo') === fooed, "map points to itself")
 
 	var me = {
 		name: "Justin"
@@ -125,21 +125,21 @@ test("cyclical objects (#521)", function () {
 	}
 	var ref = new Map(references)
 
-	ok(ref.attr('husband') === ref.attr('friend'), "multiple properties point to the same thing")
+	assert.ok(ref.attr('husband') === ref.attr('friend'), "multiple properties point to the same thing")
 
 })
 
-test('_cid add to original object', function () {
+QUnit.test('_cid add to original object', function(assert) {
 	var map = new Map(),
 		obj = {
 			'name': 'thecountofzero'
 		};
 
 	map.attr('myObj', obj);
-	ok(!obj._cid, '_cid not added to original object');
+	assert.ok(!obj._cid, '_cid not added to original object');
 });
 
-test("Map serialize triggers reading (#626)", function () {
+QUnit.test("Map serialize triggers reading (#626)", function(assert) {
 	var old = ObservationRecorder.add;
 
 	var attributesRead = [];
@@ -162,13 +162,13 @@ test("Map serialize triggers reading (#626)", function () {
 
 
 
-	ok(attributesRead.indexOf("cats") !== -1 && attributesRead.indexOf("dogs") !== -1, "map serialization triggered __reading on all attributes");
-	ok(readingTriggeredForKeys, "map serialization triggered __reading for __keys");
+	assert.ok(attributesRead.indexOf("cats") !== -1 && attributesRead.indexOf("dogs") !== -1, "map serialization triggered __reading on all attributes");
+	assert.ok(readingTriggeredForKeys, "map serialization triggered __reading for __keys");
 
 	ObservationRecorder.add = old;
 })
 
-test("Test top level attributes", 7, function () {
+QUnit.test("Test top level attributes", 7, function(assert) {
 	var test = new Map({
 		'my.enable': false,
 		'my.item': true,
@@ -182,18 +182,18 @@ test("Test top level attributes", 7, function () {
 		}
 	});
 
-	equal(test.attr('my.value'), true, 'correct');
-	equal(test.attr('my.nested.value'), 100, 'correct');
-	ok(test.attr("my.nested") instanceof Map);
+	assert.equal(test.attr('my.value'), true, 'correct');
+	assert.equal(test.attr('my.nested.value'), 100, 'correct');
+	assert.ok(test.attr("my.nested") instanceof Map);
 
-	equal(test.attr('my.enable'), false, 'falsey (false) value accessed correctly');
-	equal(test.attr('my.item'), true, 'truthey (true) value accessed correctly');
-	equal(test.attr('my.count'), 0, 'falsey (0) value accessed correctly');
-	equal(test.attr('my.newCount'), 1, 'falsey (1) value accessed correctly');
+	assert.equal(test.attr('my.enable'), false, 'falsey (false) value accessed correctly');
+	assert.equal(test.attr('my.item'), true, 'truthey (true) value accessed correctly');
+	assert.equal(test.attr('my.count'), 0, 'falsey (0) value accessed correctly');
+	assert.equal(test.attr('my.newCount'), 1, 'falsey (1) value accessed correctly');
 });
 
 
-test("serializing cycles", function(){
+QUnit.test("serializing cycles", function(assert) {
 	var map1 = new Map({name: "map1"});
 	var map2 = new Map({name: "map2"});
 
@@ -201,41 +201,41 @@ test("serializing cycles", function(){
 	map2.attr("map1", map1);
 
 	var res = map1.serialize();
-	equal(res.name, "map1");
-	equal(res.map2.name, "map2");
+	assert.equal(res.name, "map1");
+	assert.equal(res.map2.name, "map2");
 });
 
-test("Unbinding from a map with no bindings doesn't throw an error (#1015)", function() {
-	expect(0);
+QUnit.test("Unbinding from a map with no bindings doesn't throw an error (#1015)", function(assert) {
+	assert.expect(0);
 
 	var test = new Map({});
 
 	try {
 		test.unbind('change');
 	} catch(e) {
-		ok(false, 'No error should be thrown');
+		assert.ok(false, 'No error should be thrown');
 	}
 });
 
-test("Fast dispatch event still has target and type (#1082)", 4, function() {
+QUnit.test("Fast dispatch event still has target and type (#1082)", 4, function(assert) {
 	var data = new Map({
 		name: 'CanJS'
 	});
 
 	data.bind('change', function(ev){
-		equal(ev.type, 'change');
-		equal(ev.target, data);
+		assert.equal(ev.type, 'change');
+		assert.equal(ev.target, data);
 	});
 
 	data.bind('name', function(ev){
-		equal(ev.type, 'name');
-		equal(ev.target, data);
+		assert.equal(ev.type, 'name');
+		assert.equal(ev.target, data);
 	});
 
 	data.attr('name', 'David');
 });
 
-test("map passed to Map constructor (#1166)", function(){
+QUnit.test("map passed to Map constructor (#1166)", function(assert) {
 	function y() {}
 
 	var map = new Map({
@@ -243,13 +243,13 @@ test("map passed to Map constructor (#1166)", function(){
 		y: y
 	});
 	var res = new Map(map);
-	deepEqual(res.attr(), {
+	assert.deepEqual(res.attr(), {
 		x: 1,
 		y: y
 	}, "has the same properties");
 });
 
-test("constructor passed to scope is threated as a property (#1261)", function(){
+QUnit.test("constructor passed to scope is threated as a property (#1261)", function(assert) {
 	var Constructor = Construct.extend({});
 
 	var MyMap = Map.extend({
@@ -258,10 +258,10 @@ test("constructor passed to scope is threated as a property (#1261)", function()
 
 	var m = new MyMap();
 
-	equal(m.attr("Todo"), Constructor);
+	assert.equal(m.attr("Todo"), Constructor);
 });
 
-test('_bindings count maintained after calling .off() on undefined property (#1490) ', function () {
+QUnit.test('_bindings count maintained after calling .off() on undefined property (#1490) ', function(assert) {
 
 	var map = new Map({
 		test: 1
@@ -270,36 +270,36 @@ test('_bindings count maintained after calling .off() on undefined property (#14
 	map.on('test', function(){});
 	var handlers = map[canSymbol.for("can.meta")].handlers;
 
-	equal(handlers.get([]).length, 1, 'The number of bindings is correct');
+	assert.equal(handlers.get([]).length, 1, 'The number of bindings is correct');
 
 	map.off('undefined_property');
 
-	equal(handlers.get([]).length, 1, 'The number of bindings is still correct');
+	assert.equal(handlers.get([]).length, 1, 'The number of bindings is still correct');
 });
 
-test("Should be able to get and set attribute named 'watch' on Map in Firefox", function() {
+QUnit.test("Should be able to get and set attribute named 'watch' on Map in Firefox", function(assert) {
 	var map = new Map({});
 	map.attr("watch");
-	ok(true, "can have attribute named 'watch' on a Map instance");
+	assert.ok(true, "can have attribute named 'watch' on a Map instance");
 });
 
-test("Should be able to get and set attribute named 'unwatch' on Map in Firefox", function() {
+QUnit.test("Should be able to get and set attribute named 'unwatch' on Map in Firefox", function(assert) {
 	var map = new Map({});
 	map.attr("unwatch");
-	ok(true, "can have attribute named 'unwatch' on a Map instance");
+	assert.ok(true, "can have attribute named 'unwatch' on a Map instance");
 });
 
-test('should get an empty string property value correctly', function() {
+QUnit.test('should get an empty string property value correctly', function(assert) {
 	var map = new Map({
 		foo: 'foo',
 		'': 'empty string'
 	});
 
-	equal(map.attr(''), 'empty string');
+	assert.equal(map.attr(''), 'empty string');
 });
 
 
-test("ObserveReader - can.Construct derived classes should be considered objects, not functions (#450)", function() {
+QUnit.test("ObserveReader - can.Construct derived classes should be considered objects, not functions (#450)", function(assert) {
 	var foostructor = Map.extend({ text: "bar" }, {}),
 		obj = {
 			next_level: {
@@ -311,10 +311,10 @@ test("ObserveReader - can.Construct derived classes should be considered objects
 	foostructor.self = foostructor;
 
 	read = observeReader.read(obj, observeReader.reads("next_level.thing.self.text") );
-	equal(read.value, "bar", "static properties on a can.Construct-based function");
+	assert.equal(read.value, "bar", "static properties on a can.Construct-based function");
 
 	read = observeReader.read(obj, observeReader.reads("next_level.thing.self"), { isArgument: true });
-	ok(read.value === foostructor, "arguments shouldn't be executed");
+	assert.ok(read.value === foostructor, "arguments shouldn't be executed");
 
 });
 
@@ -375,7 +375,7 @@ test("ObserveReader - can.Construct derived classes should be considered objects
 
 // });
 
-test("works with can-reflect", 7, function(){
+QUnit.test("works with can-reflect", 7, function(assert) {
 	var b = new Map({ "foo": "bar" });
 	var c = new (Map.extend({
 		"baz": canCompute(function(){
@@ -383,23 +383,23 @@ test("works with can-reflect", 7, function(){
 		})
 	}))({ "foo": "bar", thud: "baz" });
 
-	QUnit.equal( canReflect.getKeyValue(b, "foo"), "bar", "unbound value");
+	assert.equal( canReflect.getKeyValue(b, "foo"), "bar", "unbound value");
 
 	function bazHandler(newValue){
-		QUnit.equal(newValue, "quux", "observed new value on baz");
+		assert.equal(newValue, "quux", "observed new value on baz");
 
 		// Turn off the "foo" handler but "thud" should still be bound.
 		canReflect.offKeyValue(c, "baz", bazHandler);
 	}
 	function thudHandler(newValue){
-		QUnit.equal(newValue, "quux", "observed new value on thud");
+		assert.equal(newValue, "quux", "observed new value on thud");
 
 		// Turn off the "foo" handler but "thud" should still be bound.
 		canReflect.offKeyValue(c, "thud", thudHandler);
 	}
-	QUnit.ok(!canReflect.isValueLike(c), "isValueLike is false");
-	QUnit.ok(canReflect.isMapLike(c), "isMapLike is true");
-	QUnit.ok(!canReflect.isListLike(c), "isListLike is false");
+	assert.ok(!canReflect.isValueLike(c), "isValueLike is false");
+	assert.ok(canReflect.isMapLike(c), "isMapLike is true");
+	assert.ok(!canReflect.isListLike(c), "isListLike is false");
 
 	canReflect.onKeyValue(c, "baz", bazHandler);
 	// Do a second binding to check that you can unbind correctly.
@@ -408,14 +408,14 @@ test("works with can-reflect", 7, function(){
 	b.attr("foo", "quux");
 	c.attr("thud", "quux");
 
-	QUnit.equal( canReflect.getKeyValue(c, "baz"), "quux", "bound value");
+	assert.equal( canReflect.getKeyValue(c, "baz"), "quux", "bound value");
 	// sanity checks to ensure that handler doesn't get called again.
 	b.attr("foo", "thud");
 	c.attr("baz", "jeek");
 
 });
 
-QUnit.test("onKeyValue and queues", function(){
+QUnit.test("onKeyValue and queues", function(assert) {
 	var b = new Map({ "foo": "bar" });
 	var order = [];
 	canReflect.onKeyValue(b, "foo", function(){
@@ -428,17 +428,17 @@ QUnit.test("onKeyValue and queues", function(){
 	});
 	b.attr("foo","baz");
 	queues.batch.stop();
-	QUnit.deepEqual(order,["onKeyValue", "mutate"]);
+	assert.deepEqual(order,["onKeyValue", "mutate"]);
 });
 
-QUnit.test("can-reflect setKeyValue", function(){
+QUnit.test("can-reflect setKeyValue", function(assert) {
 	var a = new Map({ "a": "b" });
 
 	canReflect.setKeyValue(a, "a", "c");
-	QUnit.equal(a.attr("a"), "c", "setKeyValue");
+	assert.equal(a.attr("a"), "c", "setKeyValue");
 });
 
-QUnit.test("can-reflect getKeyDependencies", function() {
+QUnit.test("can-reflect getKeyDependencies", function(assert) {
 	var a = new Map({ "a": "a" });
 	var b = new (Map.extend({
 		"a": canCompute(function(){
@@ -447,28 +447,28 @@ QUnit.test("can-reflect getKeyDependencies", function() {
 		"b": "b"
 	}))();
 
-	ok(canReflect.getKeyDependencies(b, "a"), "Dependencies on computed attr");
-	ok(!canReflect.getKeyDependencies(b, "b"), "No dependencies on data attr");
+	assert.ok(canReflect.getKeyDependencies(b, "a"), "Dependencies on computed attr");
+	assert.ok(!canReflect.getKeyDependencies(b, "b"), "No dependencies on data attr");
 	b.on("a", function() {});
-	ok(canReflect.getKeyDependencies(b, "a").valueDependencies.has(b._computedAttrs.a.compute), "dependencies returned");
-	ok(
+	assert.ok(canReflect.getKeyDependencies(b, "a").valueDependencies.has(b._computedAttrs.a.compute), "dependencies returned");
+	assert.ok(
 		canReflect.getValueDependencies(b._computedAttrs.a.compute).valueDependencies,
 		"dependencies returned from compute"
 	);
 
 });
 
-QUnit.test("registered symbols", function() {
+QUnit.test("registered symbols", function(assert) {
 	var a = new Map({ "a": "a" });
 
-	ok(a[canSymbol.for("can.isMapLike")], "can.isMapLike");
-	equal(a[canSymbol.for("can.getKeyValue")]("a"), "a", "can.getKeyValue");
+	assert.ok(a[canSymbol.for("can.isMapLike")], "can.isMapLike");
+	assert.equal(a[canSymbol.for("can.getKeyValue")]("a"), "a", "can.getKeyValue");
 	a[canSymbol.for("can.setKeyValue")]("a", "b");
-	equal(a.attr("a"), "b", "can.setKeyValue");
+	assert.equal(a.attr("a"), "b", "can.setKeyValue");
 
 	function handler(val) {
-		equal(this, a);
-		equal(val, "c", "can.onKeyValue");
+		assert.equal(this, a);
+		assert.equal(val, "c", "can.onKeyValue");
 	}
 
 	a[canSymbol.for("can.onKeyValue")]("a", handler);
@@ -484,13 +484,13 @@ require("can-reflect-tests/observables/map-like/type/type")("Map", function(){
 });
 
 
-QUnit.test("can.isBound", function(){
+QUnit.test("can.isBound", function(assert) {
 	var Person = Map.extend({
         first: "any",
         last: "any"
     });
 	var p = new Person();
-	QUnit.ok(! p[canSymbol.for("can.isBound")](), "not bound");
+	assert.ok(! p[canSymbol.for("can.isBound")](), "not bound");
 });
 
 QUnit.test("prototype properties", function(assert) {
@@ -539,7 +539,7 @@ QUnit.test("constructor should not bind on __keys (#106)", function(assert) {
 	assert.equal(map.attr('foo'), 'bar', 'map should not be reset');
 });
 
-QUnit.test(".attr(props) should overwrite if _legacyAttrBehavior is true (#112)", function(){
+QUnit.test(".attr(props) should overwrite if _legacyAttrBehavior is true (#112)", function(assert) {
 	Map.prototype._legacyAttrBehavior = true;
 
 	var myMap1Instance = new Map({prop1: new Map()});
@@ -556,12 +556,12 @@ QUnit.test(".attr(props) should overwrite if _legacyAttrBehavior is true (#112)"
 	});
 
 	delete Map.prototype._legacyAttrBehavior;
-	QUnit.equal(changes,1, "caused a change event");
+	assert.equal(changes,1, "caused a change event");
 
-	QUnit.equal(myMap1Instance.attr("prop1"), map2, "overwrite with maps");
+	assert.equal(myMap1Instance.attr("prop1"), map2, "overwrite with maps");
 });
 
-QUnit.test(".attr() leaves typed instances alone if _legacyAttrBehavior is true (#111)", function(){
+QUnit.test(".attr() leaves typed instances alone if _legacyAttrBehavior is true (#111)", function(assert) {
 
 	Map.prototype._legacyAttrBehavior = true;
 
@@ -577,12 +577,12 @@ QUnit.test(".attr() leaves typed instances alone if _legacyAttrBehavior is true 
 		myClass: new MyClass(5)
 	});
 
-	QUnit.equal( myMap.attr().myClass,  myMap.attr("myClass") )
+	assert.equal( myMap.attr().myClass,  myMap.attr("myClass") )
 
 	delete Map.prototype._legacyAttrBehavior;
 });
 
-QUnit.test(".serialize() leaves typed instances alone if _legacyAttrBehavior is true", function(){
+QUnit.test(".serialize() leaves typed instances alone if _legacyAttrBehavior is true", function(assert) {
 	function MyClass(value) {
 		this.value = value;
 	}
@@ -593,10 +593,10 @@ QUnit.test(".serialize() leaves typed instances alone if _legacyAttrBehavior is 
 	});
 
 	var ser = myMap.serialize();
-	QUnit.equal(ser.myClass, myMap.attr("myClass"));
+	assert.equal(ser.myClass, myMap.attr("myClass"));
 });
 
-QUnit.test("keys with undefined values should not be dropped (#118)", function() {
+QUnit.test("keys with undefined values should not be dropped (#118)", function(assert) {
 	// handles new instances
 	var obj1 = { "keepMe": undefined };
 	var map = new Map(obj1);
@@ -605,10 +605,10 @@ QUnit.test("keys with undefined values should not be dropped (#118)", function()
 
 	var keys = Map.keys(map);
 
-	QUnit.deepEqual(keys, ["keepMe", "foo"])
+	assert.deepEqual(keys, ["keepMe", "foo"])
 });
 
-QUnit.test("Can assign nested properties that are not CanMaps", function(){
+QUnit.test("Can assign nested properties that are not CanMaps", function(assert) {
 	var MyType = function() {
 		this.one = 'one';
 		this.two = 'two';
@@ -628,16 +628,16 @@ QUnit.test("Can assign nested properties that are not CanMaps", function(){
 	});
 
 	// Did an assign
-	QUnit.equal(map.attr("prop.one"), "1");
-	QUnit.equal(map.attr("prop.two"), "2");
-	QUnit.equal(map.attr("prop.three"), "three");
+	assert.equal(map.attr("prop.one"), "1");
+	assert.equal(map.attr("prop.two"), "2");
+	assert.equal(map.attr("prop.three"), "three");
 
 	// An update
 	map.attr({
 		prop: {one: 'one', two: 'two'}
 	}, true);
 
-	QUnit.equal(map.attr("prop.one"), "one");
-	QUnit.equal(map.attr("prop.two"), "two");
-	QUnit.equal(map.attr("prop.three"), undefined);
+	assert.equal(map.attr("prop.one"), "one");
+	assert.equal(map.attr("prop.two"), "two");
+	assert.equal(map.attr("prop.three"), undefined);
 });
