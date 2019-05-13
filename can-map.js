@@ -24,6 +24,7 @@ var ObservationRecorder = require('can-observation-recorder');
 var ObserveReader = require('can-stache-key');
 var canCompute = require('can-compute');
 var singleReference = require('can-single-reference');
+var Observation = require('can-observation');
 
 var namespace = require("can-namespace");
 var dev = require("can-log/dev/dev");
@@ -314,6 +315,24 @@ var Map = Construct.extend(
 
 			var dotIndex = attr.indexOf('.'),
 				current;
+
+			//!steal-remove-start
+			if(process.env.NODE_ENV !== 'production') {
+				var lastItem;
+				if(!canEvent.canSafelyMutate() && canQueues.stack().length) {
+					lastItem = canQueues.stack()[canQueues.stack().length - 1];
+					lastItem = lastItem.context instanceof Observation ? lastItem.context.func : lastItem.fn;
+					dev.warn(
+						"can-map: The " + attr + " property on " +
+						canReflect.getName(this) +
+						" is being set while computing the value of " +
+						canReflect.getName(lastItem) +
+						". Setting values at this time should be avoided."
+					);
+				}
+
+			}
+			//!steal-remove-end
 
 			if(dotIndex >= 0 && !keepKey){
 				var first = attr.substr(0, dotIndex),

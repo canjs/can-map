@@ -3,12 +3,14 @@
 var Map = require('can-map');
 var QUnit = require('steal-qunit');
 var canCompute = require('can-compute');
+var Observation = require('can-observation');
 var ObservationRecorder = require('can-observation-recorder');
 var Construct = require('can-construct');
 var observeReader = require('can-stache-key');
 var canReflect = require('can-reflect');
 var canSymbol = require('can-symbol');
 var queues = require("can-queues");
+var testHelpers = require("can-test-helpers");
 
 QUnit.module('can-map');
 
@@ -641,3 +643,76 @@ QUnit.test("Can assign nested properties that are not CanMaps", function(){
 	QUnit.equal(map.attr("prop.two"), "two");
 	QUnit.equal(map.attr("prop.three"), undefined);
 });
+
+testHelpers.dev.devOnlyTest("warning when setting during a get", function(){
+	var teardownWarn = testHelpers.dev.willWarn("can-map: The prop property on Type{} is being set while computing the value of a test observation. Setting values at this time should be avoided.", function(text, match) {
+		if(match) {
+			QUnit.ok(true, "warning fired");
+		}
+	});
+
+	var noop = function() {};
+	var Type = Map.extend("Type", {
+		prop: "",
+		prop2: ""
+	});
+
+	var inst = new Type();
+
+	var obs = new Observation(function() {
+		inst.attr("prop", "foo");
+		return inst.attr("prop2");
+	});
+	canReflect.setName(obs.func, "a test observation")
+	obs.on(noop);
+	inst.attr("prop2", "bar");
+	QUnit.equal(teardownWarn(), 1, "warning correctly generated");
+
+	teardownWarn = testHelpers.dev.willWarn("can-map: The prop property on Type{} is being set while computing the value of a test observation. Setting values at this time should be avoided.", function(text, match) {
+		if(match) {
+			QUnit.ok(false, "warning incorrectly fired");
+		}
+	});
+	obs.off(noop);
+	inst.attr("prop2", "baz");
+	teardownWarn();
+});
+
+testHelpers.dev.devOnlyTest("warning when setting during a get (batched)", function(){
+	var teardownWarn = testHelpers.dev.willWarn("can-map: The prop property on Type{} is being set while computing the value of a test observation. Setting values at this time should be avoided.", function(text, match) {
+		if(match) {
+			QUnit.ok(true, "warning fired");
+		}
+	});
+
+	var noop = function() {};
+	var Type = Map.extend("Type", {
+		prop: "",
+		prop2: ""
+	});
+
+	var inst = new Type();
+
+
+	queues.batch.start();
+	var obs = new Observation(function() {
+		inst.attr("prop", "foo");
+		return inst.attr("prop2");
+	});
+	canReflect.setName(obs.func, "a test observation")
+	obs.on(noop);
+	inst.attr("prop2", "bar");
+	queues.batch.stop();
+	QUnit.equal(teardownWarn(), 1, "warning correctly generated");
+	teardownWarn = testHelpers.dev.willWarn("can-map: The prop property on Type{} is being set while computing the value of a test observation. Setting values at this time should be avoided.", function(text, match) {
+		if(match) {
+			QUnit.ok(false, "warning incorrectly fired");
+		}
+	});
+	obs.off(noop);
+	queues.batch.start();
+	inst.attr("prop2", "baz");
+	queues.batch.stop();
+	teardownWarn();
+});
+
