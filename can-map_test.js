@@ -12,7 +12,8 @@ var queues = require("can-queues");
 
 QUnit.module('can-map');
 
-QUnit.test("Basic Map", 4, function(assert) {
+QUnit.test("Basic Map", function(assert) {
+	assert.expect(4);
 
 	var state = new Map({
 		category: 5,
@@ -32,7 +33,8 @@ QUnit.test("Basic Map", 4, function(assert) {
 
 });
 
-QUnit.test("Nested Map", 5, function(assert) {
+QUnit.test("Nested Map", function(assert) {
+	assert.expect(5);
 	var me = new Map({
 		name: {
 			first: "Justin",
@@ -168,7 +170,8 @@ QUnit.test("Map serialize triggers reading (#626)", function(assert) {
 	ObservationRecorder.add = old;
 })
 
-QUnit.test("Test top level attributes", 7, function(assert) {
+QUnit.test("Test top level attributes", function(assert) {
+	assert.expect(7);
 	var test = new Map({
 		'my.enable': false,
 		'my.item': true,
@@ -217,7 +220,8 @@ QUnit.test("Unbinding from a map with no bindings doesn't throw an error (#1015)
 	}
 });
 
-QUnit.test("Fast dispatch event still has target and type (#1082)", 4, function(assert) {
+QUnit.test("Fast dispatch event still has target and type (#1082)", function(assert) {
+	assert.expect(4);
 	var data = new Map({
 		name: 'CanJS'
 	});
@@ -375,7 +379,8 @@ QUnit.test("ObserveReader - can.Construct derived classes should be considered o
 
 // });
 
-QUnit.test("works with can-reflect", 7, function(assert) {
+QUnit.test("works with can-reflect", function(assert) {
+	assert.expect(7);
 	var b = new Map({ "foo": "bar" });
 	var c = new (Map.extend({
 		"baz": canCompute(function(){
