@@ -318,17 +318,34 @@ var Map = Construct.extend(
 
 			//!steal-remove-start
 			if(process.env.NODE_ENV !== 'production') {
-				var lastItem;
-				if(!canEvent.canSafelyMutate() && canQueues.stack().length) {
+				var lastItem, lastFn;
+				// If there are observations currently recording, this isn't a good time to
+				//   mutate values: it's likely a cycle, and even if it doesn't cycle infinitely,
+				//   it will likely cause unnecessary recomputation of derived values.  Warn the user.
+				if(ObservationRecorder.isRecording() && canQueues.stack().length && !this[inSetupSymbol]) {
 					lastItem = canQueues.stack()[canQueues.stack().length - 1];
-					lastItem = lastItem.context instanceof Observation ? lastItem.context.func : lastItem.fn;
-					dev.warn(
-						"can-map: The " + attr + " property on " +
+					lastFn = lastItem.context instanceof Observation ? lastItem.context.func : lastItem.fn;
+					var mutationWarning = "can-map: The " + attr + " property on " +
 						canReflect.getName(this) +
-						" is being set while computing the value of " +
-						canReflect.getName(lastItem) +
-						". Setting values at this time should be avoided."
-					);
+						" is being set in " +
+						(canReflect.getName(lastFn) || canReflect.getName(lastItem.fn)) +
+						". This can cause infinite loops and performance issues. ";
+					if(lastItem.context instanceof Observation &&
+						lastItem.context.context &&
+						lastItem.context.context instanceof Map
+					) {
+						// the observation comes from another CanMap and we should tell the user to use listenTo() to
+						//   listen for changes and do other updates instead of get().
+						mutationWarning += 
+							"Use listenTo() in CanMaps to safely set " +
+							attr +
+							" when other properties change. https://canjs.com/doc/can-event-queue/map/map.listenTo.html";
+					} else {
+						// Otherwise print a generic recommendation.
+						mutationWarning += "Use can-observation-recorder.ignore() to safely change values while deriving other ones. https://canjs.com/doc/can-observation-recorder.ignore.html";
+					}
+					dev.warn(mutationWarning);
+					canQueues.logStack();
 				}
 
 			}

@@ -645,7 +645,8 @@ QUnit.test("Can assign nested properties that are not CanMaps", function(){
 });
 
 testHelpers.dev.devOnlyTest("warning when setting during a get", function(){
-	var teardownWarn = testHelpers.dev.willWarn("can-map: The prop property on Type{} is being set while computing the value of a test observation. Setting values at this time should be avoided.", function(text, match) {
+	var msg = "can-map: The prop property on Type{} is being set in a test observation. This can cause infinite loops and performance issues. Use can-observation-recorder.ignore() to safely change values while deriving other ones. https://canjs.com/doc/can-observation-recorder.ignore.html";
+	var teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
 		if(match) {
 			QUnit.ok(true, "warning fired");
 		}
@@ -663,12 +664,47 @@ testHelpers.dev.devOnlyTest("warning when setting during a get", function(){
 		inst.attr("prop", "foo");
 		return inst.attr("prop2");
 	});
-	canReflect.setName(obs.func, "a test observation")
+	canReflect.setName(obs.func, "a test observation");
 	obs.on(noop);
 	inst.attr("prop2", "bar");
 	QUnit.equal(teardownWarn(), 1, "warning correctly generated");
 
-	teardownWarn = testHelpers.dev.willWarn("can-map: The prop property on Type{} is being set while computing the value of a test observation. Setting values at this time should be avoided.", function(text, match) {
+	teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
+		if(match) {
+			QUnit.ok(false, "warning incorrectly fired");
+		}
+	});
+	obs.off(noop);
+	inst.attr("prop2", "baz");
+	teardownWarn();
+});
+
+testHelpers.dev.devOnlyTest("warning when setting during a get (bound message)", function(){
+	var msg = "can-map: The prop property on Type{} is being set in a test observation. This can cause infinite loops and performance issues. Use listenTo() in CanMaps to safely set prop when other properties change. https://canjs.com/doc/can-event-queue/map/map.listenTo.html";
+	var teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
+		if(match) {
+			QUnit.ok(true, "warning fired");
+		}
+	});
+
+	var noop = function() {};
+	var Type = Map.extend("Type", {
+		prop: "",
+		prop2: ""
+	});
+
+	var inst = new Type();
+
+	var obs = new Observation(function() {
+		this.attr("prop", "foo");
+		return this.attr("prop2");
+	}, inst);
+	canReflect.setName(obs.func, "a test observation");
+	obs.on(noop);
+	inst.attr("prop2", "bar");
+	QUnit.equal(teardownWarn(), 1, "warning correctly generated");
+
+	teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
 		if(match) {
 			QUnit.ok(false, "warning incorrectly fired");
 		}
@@ -679,7 +715,8 @@ testHelpers.dev.devOnlyTest("warning when setting during a get", function(){
 });
 
 testHelpers.dev.devOnlyTest("warning when setting during a get (batched)", function(){
-	var teardownWarn = testHelpers.dev.willWarn("can-map: The prop property on Type{} is being set while computing the value of a test observation. Setting values at this time should be avoided.", function(text, match) {
+	var msg = "can-map: The prop property on Type{} is being set in a test observation. This can cause infinite loops and performance issues. Use can-observation-recorder.ignore() to safely change values while deriving other ones. https://canjs.com/doc/can-observation-recorder.ignore.html";
+	var teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
 		if(match) {
 			QUnit.ok(true, "warning fired");
 		}
@@ -699,12 +736,12 @@ testHelpers.dev.devOnlyTest("warning when setting during a get (batched)", funct
 		inst.attr("prop", "foo");
 		return inst.attr("prop2");
 	});
-	canReflect.setName(obs.func, "a test observation")
+	canReflect.setName(obs.func, "a test observation");
 	obs.on(noop);
 	inst.attr("prop2", "bar");
 	queues.batch.stop();
 	QUnit.equal(teardownWarn(), 1, "warning correctly generated");
-	teardownWarn = testHelpers.dev.willWarn("can-map: The prop property on Type{} is being set while computing the value of a test observation. Setting values at this time should be avoided.", function(text, match) {
+	teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
 		if(match) {
 			QUnit.ok(false, "warning incorrectly fired");
 		}
