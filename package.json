@@ -42,7 +42,7 @@
     "can-namespace": "^1.0.0",
     "can-observation-recorder": "<2.0.0",
     "can-queues": "<2.0.0",
-    "can-reflect": "^1.7.2",
+    "can-reflect": "1.17.9",
     "can-simple-observable": "^2.0.0",
     "can-single-reference": "^1.0.0",
     "can-stache-key": "^1.0.0",
