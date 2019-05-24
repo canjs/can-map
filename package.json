@@ -36,7 +36,7 @@
     "can-assign": "^1.0.0",
     "can-cid": "^1.1.2",
     "can-compute": "^4.0.0",
-    "can-construct": "^3.5.4",
+    "can-construct": "^3.5.6",
     "can-event-queue": "<2.0.0",
     "can-log": "^1.0.0",
     "can-namespace": "^1.0.0",
