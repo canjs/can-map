@@ -329,21 +329,9 @@ var Map = Construct.extend(
 						canReflect.getName(this) +
 						" is being set in " +
 						(canReflect.getName(lastFn) || canReflect.getName(lastItem.fn)) +
-						". This can cause infinite loops and performance issues. ";
-					if(lastItem.context instanceof Observation &&
-						lastItem.context.context &&
-						lastItem.context.context instanceof Map
-					) {
-						// the observation comes from another CanMap and we should tell the user to use listenTo() to
-						//   listen for changes and do other updates instead of get().
-						mutationWarning += 
-							"Use listenTo() in CanMaps to safely set " +
-							attr +
-							" when other properties change. https://canjs.com/doc/can-event-queue/map/map.listenTo.html";
-					} else {
-						// Otherwise print a generic recommendation.
-						mutationWarning += "Use can-observation-recorder.ignore() to safely change values while deriving other ones. https://canjs.com/doc/can-observation-recorder.ignore.html";
-					}
+						". This can cause infinite loops and performance issues. " +
+						"Use getters and listeners to derive properties instead. https://canjs.com/doc/guides/logic.html#Derivedproperties";
+
 					dev.warn(mutationWarning);
 					canQueues.logStack();
 				}
@@ -724,7 +712,7 @@ Map.prototype.removeEventListener = function (eventName, handler) {
 	if (computedBinding) {
 		if (computedBinding.count === 1) {
 			computedBinding.count = 0;
-			canReflect.offValue(computedBinding.compute, computedBinding.handler);
+			canReflect.offValue(computedBinding.compute, computedBinding.handler, "notify");
 		} else {
 			computedBinding.count--;
 		}

@@ -3,7 +3,6 @@
 var Map = require('can-map');
 var QUnit = require('steal-qunit');
 var canCompute = require('can-compute');
-var Observation = require('can-observation');
 var ObservationRecorder = require('can-observation-recorder');
 var Construct = require('can-construct');
 var observeReader = require('can-stache-key');
@@ -645,7 +644,7 @@ QUnit.test("Can assign nested properties that are not CanMaps", function(){
 });
 
 testHelpers.dev.devOnlyTest("warning when setting during a get", function(){
-	var msg = "can-map: The prop property on Type{} is being set in a test observation. This can cause infinite loops and performance issues. Use can-observation-recorder.ignore() to safely change values while deriving other ones. https://canjs.com/doc/can-observation-recorder.ignore.html";
+	var msg = "can-map: The prop property on Type{} is being set in getterThatWrites. This can cause infinite loops and performance issues. Use getters and listeners to derive properties instead. https://canjs.com/doc/guides/logic.html#Derivedproperties";
 	var teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
 		if(match) {
 			QUnit.ok(true, "warning fired");
@@ -660,12 +659,15 @@ testHelpers.dev.devOnlyTest("warning when setting during a get", function(){
 
 	var inst = new Type();
 
-	var obs = new Observation(function() {
-		inst.attr("prop", "foo");
-		return inst.attr("prop2");
+	var Type2 = Map.extend("Type2", {
+		baz: canCompute(function getterThatWrites() {
+			inst.attr("prop", "foo");
+			return inst.attr("prop2");
+		})
 	});
-	canReflect.setName(obs.func, "a test observation");
-	obs.on(noop);
+	var obs = new Type2();
+	canReflect.setName(Type2.prototype.baz, "a test observation");
+	obs.on("baz", noop);
 	inst.attr("prop2", "bar");
 	QUnit.equal(teardownWarn(), 1, "warning correctly generated");
 
@@ -674,48 +676,13 @@ testHelpers.dev.devOnlyTest("warning when setting during a get", function(){
 			QUnit.ok(false, "warning incorrectly fired");
 		}
 	});
-	obs.off(noop);
-	inst.attr("prop2", "baz");
-	teardownWarn();
-});
-
-testHelpers.dev.devOnlyTest("warning when setting during a get (bound message)", function(){
-	var msg = "can-map: The prop property on Type{} is being set in a test observation. This can cause infinite loops and performance issues. Use listenTo() in CanMaps to safely set prop when other properties change. https://canjs.com/doc/can-event-queue/map/map.listenTo.html";
-	var teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
-		if(match) {
-			QUnit.ok(true, "warning fired");
-		}
-	});
-
-	var noop = function() {};
-	var Type = Map.extend("Type", {
-		prop: "",
-		prop2: ""
-	});
-
-	var inst = new Type();
-
-	var obs = new Observation(function() {
-		this.attr("prop", "foo");
-		return this.attr("prop2");
-	}, inst);
-	canReflect.setName(obs.func, "a test observation");
-	obs.on(noop);
-	inst.attr("prop2", "bar");
-	QUnit.equal(teardownWarn(), 1, "warning correctly generated");
-
-	teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
-		if(match) {
-			QUnit.ok(false, "warning incorrectly fired");
-		}
-	});
-	obs.off(noop);
+	obs.off("baz", noop);
 	inst.attr("prop2", "baz");
 	teardownWarn();
 });
 
 testHelpers.dev.devOnlyTest("warning when setting during a get (batched)", function(){
-	var msg = "can-map: The prop property on Type{} is being set in a test observation. This can cause infinite loops and performance issues. Use can-observation-recorder.ignore() to safely change values while deriving other ones. https://canjs.com/doc/can-observation-recorder.ignore.html";
+	var msg = "can-map: The prop property on Type{} is being set in getterThatWrites. This can cause infinite loops and performance issues. Use getters and listeners to derive properties instead. https://canjs.com/doc/guides/logic.html#Derivedproperties";
 	var teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
 		if(match) {
 			QUnit.ok(true, "warning fired");
@@ -732,12 +699,15 @@ testHelpers.dev.devOnlyTest("warning when setting during a get (batched)", funct
 
 
 	queues.batch.start();
-	var obs = new Observation(function() {
-		inst.attr("prop", "foo");
-		return inst.attr("prop2");
+	var Type2 = Map.extend("Type2", {
+		baz: canCompute(function getterThatWrites() {
+			inst.attr("prop", "foo");
+			return inst.attr("prop2");
+		})
 	});
-	canReflect.setName(obs.func, "a test observation");
-	obs.on(noop);
+	var obs = new Type2();
+	canReflect.setName(Type2.prototype.baz, "a test observation");
+	obs.on("baz", noop);
 	inst.attr("prop2", "bar");
 	queues.batch.stop();
 	QUnit.equal(teardownWarn(), 1, "warning correctly generated");
@@ -746,7 +716,7 @@ testHelpers.dev.devOnlyTest("warning when setting during a get (batched)", funct
 			QUnit.ok(false, "warning incorrectly fired");
 		}
 	});
-	obs.off(noop);
+	obs.off("baz", noop);
 	queues.batch.start();
 	inst.attr("prop2", "baz");
 	queues.batch.stop();
