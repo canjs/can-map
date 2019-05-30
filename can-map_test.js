@@ -648,11 +648,11 @@ QUnit.test("Can assign nested properties that are not CanMaps", function(assert)
 	assert.equal(map.attr("prop.three"), undefined);
 });
 
-testHelpers.dev.devOnlyTest("warning when setting during a get", function(){
+testHelpers.dev.devOnlyTest("warning when setting during a get", function(assert){
 	var msg = "can-map: The prop property on Type{} is being set in getterThatWrites. This can cause infinite loops and performance issues. Use getters and listeners to derive properties instead. https://canjs.com/doc/guides/logic.html#Derivedproperties";
 	var teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
 		if(match) {
-			QUnit.ok(true, "warning fired");
+			assert.ok(true, "warning fired");
 		}
 	});
 
@@ -674,11 +674,11 @@ testHelpers.dev.devOnlyTest("warning when setting during a get", function(){
 	canReflect.setName(Type2.prototype.baz, "a test observation");
 	obs.on("baz", noop);
 	inst.attr("prop2", "bar");
-	QUnit.equal(teardownWarn(), 1, "warning correctly generated");
+	assert.equal(teardownWarn(), 1, "warning correctly generated");
 
 	teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
 		if(match) {
-			QUnit.ok(false, "warning incorrectly fired");
+			assert.ok(false, "warning incorrectly fired");
 		}
 	});
 	obs.off("baz", noop);
@@ -686,11 +686,11 @@ testHelpers.dev.devOnlyTest("warning when setting during a get", function(){
 	teardownWarn();
 });
 
-testHelpers.dev.devOnlyTest("warning when setting during a get (batched)", function(){
+testHelpers.dev.devOnlyTest("warning when setting during a get (batched)", function(assert){
 	var msg = "can-map: The prop property on Type{} is being set in getterThatWrites. This can cause infinite loops and performance issues. Use getters and listeners to derive properties instead. https://canjs.com/doc/guides/logic.html#Derivedproperties";
 	var teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
 		if(match) {
-			QUnit.ok(true, "warning fired");
+			assert.ok(true, "warning fired");
 		}
 	});
 
@@ -715,10 +715,10 @@ testHelpers.dev.devOnlyTest("warning when setting during a get (batched)", funct
 	obs.on("baz", noop);
 	inst.attr("prop2", "bar");
 	queues.batch.stop();
-	QUnit.equal(teardownWarn(), 1, "warning correctly generated");
+	assert.equal(teardownWarn(), 1, "warning correctly generated");
 	teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
 		if(match) {
-			QUnit.ok(false, "warning incorrectly fired");
+			assert.ok(false, "warning incorrectly fired");
 		}
 	});
 	obs.off("baz", noop);
