@@ -24,6 +24,7 @@ var ObservationRecorder = require('can-observation-recorder');
 var ObserveReader = require('can-stache-key');
 var canCompute = require('can-compute');
 var singleReference = require('can-single-reference');
+var Observation = require('can-observation');
 
 var namespace = require("can-namespace");
 var dev = require("can-log/dev/dev");
@@ -314,6 +315,29 @@ var Map = Construct.extend(
 
 			var dotIndex = attr.indexOf('.'),
 				current;
+
+			//!steal-remove-start
+			if(process.env.NODE_ENV !== 'production') {
+				var lastItem, lastFn;
+				// If there are observations currently recording, this isn't a good time to
+				//   mutate values: it's likely a cycle, and even if it doesn't cycle infinitely,
+				//   it will likely cause unnecessary recomputation of derived values.  Warn the user.
+				if(ObservationRecorder.isRecording() && canQueues.stack().length && !this[inSetupSymbol]) {
+					lastItem = canQueues.stack()[canQueues.stack().length - 1];
+					lastFn = lastItem.context instanceof Observation ? lastItem.context.func : lastItem.fn;
+					var mutationWarning = "can-map: The " + attr + " property on " +
+						canReflect.getName(this) +
+						" is being set in " +
+						(canReflect.getName(lastFn) || canReflect.getName(lastItem.fn)) +
+						". This can cause infinite loops and performance issues. " +
+						"Use getters and listeners to derive properties instead. https://canjs.com/doc/guides/logic.html#Derivedproperties";
+
+					dev.warn(mutationWarning);
+					canQueues.logStack();
+				}
+
+			}
+			//!steal-remove-end
 
 			if(dotIndex >= 0 && !keepKey){
 				var first = attr.substr(0, dotIndex),
@@ -688,7 +712,7 @@ Map.prototype.removeEventListener = function (eventName, handler) {
 	if (computedBinding) {
 		if (computedBinding.count === 1) {
 			computedBinding.count = 0;
-			canReflect.offValue(computedBinding.compute, computedBinding.handler);
+			canReflect.offValue(computedBinding.compute, computedBinding.handler, "notify");
 		} else {
 			computedBinding.count--;
 		}

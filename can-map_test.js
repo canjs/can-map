@@ -9,6 +9,7 @@ var observeReader = require('can-stache-key');
 var canReflect = require('can-reflect');
 var canSymbol = require('can-symbol');
 var queues = require("can-queues");
+var testHelpers = require("can-test-helpers");
 
 QUnit.module('can-map');
 
@@ -646,3 +647,84 @@ QUnit.test("Can assign nested properties that are not CanMaps", function(assert)
 	assert.equal(map.attr("prop.two"), "two");
 	assert.equal(map.attr("prop.three"), undefined);
 });
+
+testHelpers.dev.devOnlyTest("warning when setting during a get", function(assert){
+	var msg = "can-map: The prop property on Type{} is being set in getterThatWrites. This can cause infinite loops and performance issues. Use getters and listeners to derive properties instead. https://canjs.com/doc/guides/logic.html#Derivedproperties";
+	var teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
+		if(match) {
+			assert.ok(true, "warning fired");
+		}
+	});
+
+	var noop = function() {};
+	var Type = Map.extend("Type", {
+		prop: "",
+		prop2: ""
+	});
+
+	var inst = new Type();
+
+	var Type2 = Map.extend("Type2", {
+		baz: canCompute(function getterThatWrites() {
+			inst.attr("prop", "foo");
+			return inst.attr("prop2");
+		})
+	});
+	var obs = new Type2();
+	canReflect.setName(Type2.prototype.baz, "a test observation");
+	obs.on("baz", noop);
+	inst.attr("prop2", "bar");
+	assert.equal(teardownWarn(), 1, "warning correctly generated");
+
+	teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
+		if(match) {
+			assert.ok(false, "warning incorrectly fired");
+		}
+	});
+	obs.off("baz", noop);
+	inst.attr("prop2", "baz");
+	teardownWarn();
+});
+
+testHelpers.dev.devOnlyTest("warning when setting during a get (batched)", function(assert){
+	var msg = "can-map: The prop property on Type{} is being set in getterThatWrites. This can cause infinite loops and performance issues. Use getters and listeners to derive properties instead. https://canjs.com/doc/guides/logic.html#Derivedproperties";
+	var teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
+		if(match) {
+			assert.ok(true, "warning fired");
+		}
+	});
+
+	var noop = function() {};
+	var Type = Map.extend("Type", {
+		prop: "",
+		prop2: ""
+	});
+
+	var inst = new Type();
+
+
+	queues.batch.start();
+	var Type2 = Map.extend("Type2", {
+		baz: canCompute(function getterThatWrites() {
+			inst.attr("prop", "foo");
+			return inst.attr("prop2");
+		})
+	});
+	var obs = new Type2();
+	canReflect.setName(Type2.prototype.baz, "a test observation");
+	obs.on("baz", noop);
+	inst.attr("prop2", "bar");
+	queues.batch.stop();
+	assert.equal(teardownWarn(), 1, "warning correctly generated");
+	teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
+		if(match) {
+			assert.ok(false, "warning incorrectly fired");
+		}
+	});
+	obs.off("baz", noop);
+	queues.batch.start();
+	inst.attr("prop2", "baz");
+	queues.batch.stop();
+	teardownWarn();
+});
+
