@@ -649,7 +649,7 @@ QUnit.test("Can assign nested properties that are not CanMaps", function(assert)
 });
 
 testHelpers.dev.devOnlyTest("warning when setting during a get", function(assert){
-	var msg = "can-map: The prop property on Type{} is being set in getterThatWrites. This can cause infinite loops and performance issues. Use getters and listeners to derive properties instead. https://canjs.com/doc/guides/logic.html#Derivedproperties";
+	var msg = /.* This can cause infinite loops and performance issues.*/;
 	var teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
 		if(match) {
 			assert.ok(true, "warning fired");
@@ -687,7 +687,7 @@ testHelpers.dev.devOnlyTest("warning when setting during a get", function(assert
 });
 
 testHelpers.dev.devOnlyTest("warning when setting during a get (batched)", function(assert){
-	var msg = "can-map: The prop property on Type{} is being set in getterThatWrites. This can cause infinite loops and performance issues. Use getters and listeners to derive properties instead. https://canjs.com/doc/guides/logic.html#Derivedproperties";
+	var msg = /.* This can cause infinite loops and performance issues.*/;
 	var teardownWarn = testHelpers.dev.willWarn(msg, function(text, match) {
 		if(match) {
 			assert.ok(true, "warning fired");
@@ -727,4 +727,3 @@ testHelpers.dev.devOnlyTest("warning when setting during a get (batched)", funct
 	queues.batch.stop();
 	teardownWarn();
 });
-
