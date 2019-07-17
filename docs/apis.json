@@ -4,7 +4,6 @@
 		"can-map.prototype.bind",
 		"can-map.prototype.compute",
 		"can-map.prototype.DEFAULT-ATTR",
-		"can-map.prototype.each",
 		"can-map.prototype.removeAttr",
 		"can-map.prototype.serialize",
 		"can-map.prototype.unbind",
