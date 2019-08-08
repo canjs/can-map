@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "can-observation": "^4.0.0",
-    "can-reflect-tests": "^0.3.1",
+    "can-reflect-tests": "^1.0.0",
     "can-simple-observable": "^2.0.0",
     "can-test-helpers": "^1.1.4",
     "detect-cyclic-packages": "^1.1.0",
