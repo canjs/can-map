@@ -192,7 +192,7 @@ var bubble = {
 		childrenOf: function (parent, eventName) {
 
 			parent._each(function (child, prop) {
-				if (child && !canReflect.isFunctionLike(child) && child.bind) {
+				if (child && !canReflect.isFunctionLike(child) && canReflect.isMapLike(child)) {
 					bubble.toParent(child, parent, prop, eventName);
 				}
 			});
