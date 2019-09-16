@@ -144,7 +144,9 @@ var bubble = {
 		// For an event binding on an object, returns the events that should be bubbled.
 		// For example, `"change" -> ["change"]`.
 		events: function(map, boundEventName) {
-			return map.constructor._bubbleRule(boundEventName, map);
+			if (map && !canReflect.isFunctionLike(map)) {
+				return map.constructor._bubbleRule(boundEventName, map);
+			}
 		},
 
 
@@ -190,7 +192,7 @@ var bubble = {
 		childrenOf: function (parent, eventName) {
 
 			parent._each(function (child, prop) {
-				if (child && child.bind) {
+				if (child && !canReflect.isFunctionLike(child) && canReflect.isMapLike(child)) {
 					bubble.toParent(child, parent, prop, eventName);
 				}
 			});
