@@ -26,6 +26,12 @@ var canEvent = require('can-event-queue/map/map');
 
 var canReflect = require('can-reflect');
 
+// Helper function to check the Map type
+var isMap = function(map) {
+	return (map && !canReflect.isFunctionLike(map) && 
+			canReflect.isMapLike(map) && !Array.isArray(map));
+};
+
 
 var bubble = {
 		// ## bubble.bind
@@ -144,7 +150,7 @@ var bubble = {
 		// For an event binding on an object, returns the events that should be bubbled.
 		// For example, `"change" -> ["change"]`.
 		events: function(map, boundEventName) {
-			if (map && !canReflect.isFunctionLike(map)) {
+			if (isMap(map)) {
 				return map.constructor._bubbleRule(boundEventName, map);
 			}
 		},
@@ -192,7 +198,7 @@ var bubble = {
 		childrenOf: function (parent, eventName) {
 
 			parent._each(function (child, prop) {
-				if (child && !canReflect.isFunctionLike(child) && canReflect.isMapLike(child)) {
+				if (isMap(child)) {
 					bubble.toParent(child, parent, prop, eventName);
 				}
 			});
