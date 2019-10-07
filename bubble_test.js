@@ -25,3 +25,17 @@ QUnit.test(".childrenOf should not bubble functions in nested maps", function(as
 	assert.equal(bubble.events(map.attr("obj").fooFn, "change"), undefined, "Nested maps functions are not bubbled");
 	assert.equal(bubble.events(map.attr("obj.foo"), "change").length, 1, "Still bubbles nested maps");
 });
+
+QUnit.test(".childrenOf should not bubble array", function(assert){
+	var map = new CanMap({
+		foo: ['item'],
+		bar: {
+			baz: ['anotherItem']
+		}
+	});
+	bubble.childrenOf(map, "change");
+	assert.equal(bubble.events(map.attr("foo"), "change"), undefined);
+	assert.equal(bubble.events(map.attr("bar.baz"), "change"), undefined);
+	
+	assert.ok(true);
+});
