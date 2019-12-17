@@ -28,8 +28,13 @@ var canReflect = require('can-reflect');
 
 // Helper function to check the Map type
 var isMap = function(map) {
-	return (map && !canReflect.isFunctionLike(map) && 
-			canReflect.isMapLike(map) && !Array.isArray(map));
+	return (
+		map &&
+		!canReflect.isFunctionLike(map) && 
+		canReflect.isMapLike(map) &&
+		!Array.isArray(map) &&
+		canReflect.isObservableLike(map)
+	);
 };
 
 
@@ -198,7 +203,7 @@ var bubble = {
 		childrenOf: function (parent, eventName) {
 
 			parent._each(function (child, prop) {
-				if (isMap(child) && canReflect.isObservableLike(child)) {
+				if (isMap(child)) {
 					bubble.toParent(child, parent, prop, eventName);
 				}
 			});

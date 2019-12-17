@@ -48,5 +48,8 @@ QUnit.test(".childrenOf should not bind nested non-Observables", function(assert
 			})
 	});
 	bubble.childrenOf(map, "change");
-	assert.ok(true, "Bubble children does not error");
+	assert.equal(bubble.events(map.attr("type"), "change"), undefined, "non-Observable child does not bubble");
+	map.attr("type", new CanMap({}));
+	assert.equal(bubble.events(map.attr("type"), "change").length, 1, "replacing with Observable child bubbles");
+
 });
