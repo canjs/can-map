@@ -194,11 +194,11 @@ var bubble = {
 		},
 
 		// ## bubble.childrenOf
-		// Bubbles all the children of `parent`.
+		// Bubbles all the observable children of `parent`.
 		childrenOf: function (parent, eventName) {
 
 			parent._each(function (child, prop) {
-				if (isMap(child)) {
+				if (isMap(child) && canReflect.isObservableLike(child)) {
 					bubble.toParent(child, parent, prop, eventName);
 				}
 			});

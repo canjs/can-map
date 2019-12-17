@@ -39,3 +39,14 @@ QUnit.test(".childrenOf should not bubble array", function(assert){
 	
 	assert.ok(true);
 });
+
+QUnit.test(".childrenOf should not bind nested non-Observables", function(assert){
+
+	var map = new CanMap({
+			type: Object.create({
+				label: "hello",
+			})
+	});
+	bubble.childrenOf(map, "change");
+	assert.ok(true, "Bubble children does not error");
+});
