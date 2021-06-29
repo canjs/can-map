@@ -148,6 +148,7 @@ var Map = Construct.extend(
 		// are here mostly for can.Model.
 		addEventListener: canEvent.addEventListener,
 		removeEventListener: canEvent.removeEventListener,
+		dispatch: canEvent.dispatch,
 
 		// ### keys
 		// An observable way to get the keys from a map.
