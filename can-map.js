@@ -509,7 +509,7 @@ var Map = Construct.extend(
 		// Returns the values of all attributes as a plain JavaScript object.
 		_getAttrs: function(){
 			if(this._legacyAttrBehavior) {
-				return mapHelpers.serialize(this, 'attr', {});
+				return mapHelpers.serialize(this, 'attr', canReflect.isListLike(this) ? [] : {});
 			} else {
 				return canReflect.unwrap(this, CIDMap);
 			}
