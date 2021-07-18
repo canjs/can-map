@@ -583,7 +583,16 @@ QUnit.test(".attr() leaves typed instances alone if _legacyAttrBehavior is true 
 		myClass: new MyClass(5)
 	});
 
-	assert.equal( myMap.attr().myClass,  myMap.attr("myClass") )
+	assert.equal( myMap.attr().myClass,  myMap.attr("myClass") );
+
+
+	var myMap2 = new Map({
+		myClass: {foo: "bar"}
+	});
+
+	assert.deepEqual(myMap2.attr(), {
+		myClass: {foo: "bar"}
+	}, "attr returns plain objects");
 
 	delete Map.prototype._legacyAttrBehavior;
 });

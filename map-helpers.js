@@ -136,14 +136,17 @@ var mapHelpers = {
 	// If `val` is an observable, calls `how` on it; otherwise
 	// returns the value of `val`.
 	getValue: function(map, name, val, how){
-		if(how === "attr") {
-			how = canSymbol.for("can.getValue");
+
+		if( canReflect.isObservableLike(val) ) {
+			var getValue = canSymbol.for("can.getValue");
+			if( how === "attr" && val[getValue] ) {
+				return val[getValue]();
+			}
+			else if( val[how] ) {
+				return val[how]();
+			}
 		}
-		if( canReflect.isObservableLike(val) && val[how] ) {
-			return val[how]();
-		} else {
-			return val;
-		}
+		return val;
 	},
 
 	// ## define
