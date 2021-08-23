@@ -102,8 +102,8 @@ var mapHelpers = {
 			}
 
 			serializeMap[how][cid] = where;
-			// Go through each property.
-			map.forEach(function (val, name) {
+
+			function handleAttribute (val, name) {
 				// If the value is an `object`, and has an `attr` or `serialize` function.
 				var result,
 					isObservable = canReflect.isObservableLike(val),
@@ -123,7 +123,17 @@ var mapHelpers = {
 				if(result !== undefined){
 					where[name] = result;
 				}
-			});
+			}
+			// Go through each property.
+			map.forEach(handleAttribute);
+			// For legacy behavior, includes attrs whose can.define spec includes `serialize: false`
+			if (map._legacyAttrBehavior && how === "attr" && map.define) {
+				Object.keys(map.define).forEach(function (name) {
+					if (map.define[name].serialize === false) {
+						handleAttribute(map.attr(name), name)
+					}
+				})
+			}
 
 			if(firstSerialize) {
 				serializeMap = null;
