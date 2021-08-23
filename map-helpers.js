@@ -130,9 +130,9 @@ var mapHelpers = {
 			if (map._legacyAttrBehavior && how === "attr" && map.define) {
 				Object.keys(map.define).forEach(function (name) {
 					if (map.define[name].serialize === false) {
-						handleAttribute(map.attr(name), name)
+						handleAttribute(map.attr(name), name);
 					}
-				})
+				});
 			}
 
 			if(firstSerialize) {
